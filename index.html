@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="description" content="每天 15 个单词，支持磨耳朵、默写、组句和复习的零基础英语学习工具。" />
+    <title>英语 365 · 每天学 15 个词</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="返回学习首页">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span><strong>英语 365</strong><small>每天 15 个，慢慢来</small></span>
+      </a>
+      <nav class="main-nav" aria-label="主要功能">
+        <button class="nav-btn active" data-view="home"><span aria-hidden="true">⌂</span> 今日学习</button>
+        <button class="nav-btn" data-view="dictation"><span aria-hidden="true">✎</span> 默写</button>
+        <button class="nav-btn" data-view="sentences"><span aria-hidden="true">✦</span> 组句</button>
+        <button class="nav-btn" data-view="review"><span aria-hidden="true">↻</span> 复习</button>
+      </nav>
+    </header>
+
+    <main id="main" class="app-shell">
+      <section class="day-bar" aria-label="学习日期切换">
+        <div class="day-title">
+          <span class="eyebrow">365 天学习计划</span>
+          <div class="day-switcher">
+            <button id="prevDay" class="icon-btn" aria-label="上一天">←</button>
+            <label class="sr-only" for="daySelect">选择学习日</label>
+            <select id="daySelect" aria-label="选择学习日"></select>
+            <button id="nextDay" class="icon-btn" aria-label="下一天">→</button>
+          </div>
+        </div>
+        <div class="day-meter">
+          <div><span id="dayWordCount">15 / 15 个词</span><strong id="dayPercent">0%</strong></div>
+          <div class="progress-track" aria-hidden="true"><span id="dayProgressBar"></span></div>
+        </div>
+      </section>
+
+      <section id="view-home" class="view active" aria-labelledby="homeHeading">
+        <div class="stats-grid" aria-label="学习统计">
+          <article class="stat-card indigo"><span>当前学习</span><strong id="statCurrent">Day 3</strong><small>今天也学一点</small></article>
+          <article class="stat-card mint"><span>已学天数</span><strong id="statDays">0 <em>天</em></strong><small>打开并学习过</small></article>
+          <article class="stat-card orange"><span>已掌握</span><strong id="statMastered">0 <em>词</em></strong><small>你的词汇积累</small></article>
+          <article class="stat-card sky"><span>连续学习</span><strong id="statStreak">0 <em>天</em></strong><small>保持小小的节奏</small></article>
+        </div>
+
+        <div class="section-heading hero-row">
+          <div>
+            <span class="eyebrow">今日 15 词</span>
+            <h1 id="homeHeading">先听熟，再记住</h1>
+            <p>点一个单词听发音，或从头开始循环播放。</p>
+          </div>
+          <button id="continueToday" class="primary-btn">▶ 开始今日学习</button>
+        </div>
+
+        <section class="player-card" aria-label="磨耳朵播放器">
+          <div class="now-playing">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <div><small>正在学习</small><strong id="playerWord">准备好了吗？</strong><span id="playerMeaning">点击播放开始</span></div>
+          </div>
+          <div class="player-controls">
+            <button id="prevWord" class="control-btn" aria-label="上一个单词">⏮ <span>上一词</span></button>
+            <button id="playGroup" class="play-btn">▶ <span>整组循环</span></button>
+            <button id="nextWord" class="control-btn" aria-label="下一个单词">⏭ <span>下一词</span></button>
+            <button id="stopAll" class="control-btn danger" aria-label="停止全部播放">■ <span>全部停止</span></button>
+            <label class="speed-control">速度
+              <select id="speechRate" aria-label="发音速度">
+                <option value="0.75">0.75×</option>
+                <option value="1" selected>1×</option>
+                <option value="1.25">1.25×</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <div id="wordList" class="word-grid" aria-live="polite"></div>
+        <div id="emptyDay" class="empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">＋</div>
+          <h2>这一天还没有单词</h2>
+          <p>Day 1–50 已经准备好；Day 51–365 暂时留空，也可以自己添加。</p>
+          <button class="primary-btn open-editor">添加今天 15 个词</button>
+        </div>
+        <div class="add-row"><button class="secondary-btn open-editor">＋ 添加 / 编辑今天 15 个词</button></div>
+      </section>
+
+      <section id="view-dictation" class="view" aria-labelledby="dictationHeading" hidden>
+        <div class="section-heading compact">
+          <div><span class="eyebrow">默写模式</span><h1 id="dictationHeading">听发音，输入英文</h1><p>系统会自动检查答案；答对易错词后，“易错”标记会自动清除。</p></div>
+          <div class="dictation-score"><span>本组正确率</span><strong id="dictationAccuracy">—</strong></div>
+        </div>
+
+        <div class="dictation-layout">
+          <article class="dictation-card">
+            <div class="dictation-progress" aria-hidden="true"><span id="dictationProgress"></span></div>
+            <div class="dictation-count">第 <span id="dictationIndex">1</span> 个，共 <span id="dictationTotal">15</span> 个</div>
+            <span id="dictationPrompt" class="dictation-prompt">先听一遍，再写答案</span>
+            <span class="meaning-label">中文意思</span>
+            <h2 id="dictationMeaning">做 / 制作</h2>
+            <div id="dictationAnswer" class="dictation-answer" aria-live="polite" hidden>
+              <strong id="dictationEnglish">make</strong><span id="dictationPhonetic">/meɪk/</span>
+            </div>
+            <div class="dictation-entry">
+              <label for="dictationInput">你听到的英文</label>
+              <div class="dictation-input-row">
+                <button id="dictationSpeak" class="round-action" aria-label="播放当前单词发音">🔊</button>
+                <input id="dictationInput" type="text" placeholder="在这里输入英文" autocomplete="off" autocapitalize="none" spellcheck="false" />
+                <button id="checkAnswer" class="primary-btn">检查答案</button>
+              </div>
+              <p id="dictationFeedback" class="dictation-feedback" aria-live="polite">写好后按回车，也可以点“检查答案”。</p>
+            </div>
+            <button id="showAnswer" class="text-btn">不会，看看答案</button>
+            <div class="player-controls dictation-controls">
+              <button id="dictPrev" class="control-btn">← 上一个</button>
+              <button id="dictRepeat" class="control-btn">↻ 重复</button>
+              <button id="dictPause" class="control-btn">Ⅱ 暂停</button>
+              <button id="dictNext" class="control-btn">下一个 →</button>
+            </div>
+          </article>
+
+          <aside class="voice-panel">
+            <div class="voice-heading"><span id="micState" class="mic-icon" aria-hidden="true">●</span><div><h2>语音控制</h2><p id="voiceStatus">正在检查浏览器支持情况…</p></div></div>
+            <button id="voiceToggle" class="secondary-btn">开启语音控制</button>
+            <div class="command-list" aria-label="可用语音指令">
+              <span>“下一个”</span><span>“上一个”</span><span>“重复”</span><span>“暂停”</span><span>“继续”</span><span>“停止”</span>
+            </div>
+            <p class="privacy-note">语音识别能力由浏览器提供；如果不支持，所有按钮仍可正常使用。</p>
+          </aside>
+        </div>
+      </section>
+
+      <section id="view-sentences" class="view" aria-labelledby="sentenceHeading" hidden>
+        <div class="section-heading compact">
+          <div><span class="eyebrow">组句练习</span><h1 id="sentenceHeading">把会的词连起来</h1><p>每句都能单独播放，也可以把本组句子一直循环播放。</p></div>
+          <div class="heading-actions">
+            <button id="playAllSentences" class="primary-btn">▶ 循环播放本组</button>
+            <button id="refreshSentences" class="secondary-btn">↻ 换一组句子</button>
+          </div>
+        </div>
+        <section id="sentenceNowPlaying" class="sentence-now-playing" aria-live="polite" hidden>
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <div>
+            <small id="sentenceNowLabel">正在循环播放</small>
+            <strong id="sentenceNowEnglish">准备播放句子</strong>
+            <span id="sentenceNowChinese">中文翻译会显示在这里</span>
+          </div>
+        </section>
+        <div id="sentenceList" class="sentence-list"></div>
+        <div id="sentenceEmpty" class="empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">Aa</div><h2>先添加今天的单词</h2><p>有了单词，就可以开始组句练习。</p>
+        </div>
+      </section>
+
+      <section id="view-review" class="view" aria-labelledby="reviewHeading" hidden>
+        <div class="section-heading compact">
+          <div><span class="eyebrow">复习</span><h1 id="reviewHeading">把记忆变牢</h1><p>从已掌握或默写易错的词里，挑一组再听一遍。</p></div>
+        </div>
+        <div class="review-toolbar">
+          <div class="filter-tabs" role="group" aria-label="复习筛选">
+            <button class="filter-btn active" data-filter="all">全部已学</button>
+            <button class="filter-btn" data-filter="mastered">已掌握</button>
+            <button class="filter-btn" data-filter="mistakes">易错词</button>
+          </div>
+          <button id="playReview" class="primary-btn">▶ 播放筛选结果</button>
+        </div>
+        <div id="reviewSummary" class="review-summary"></div>
+        <div id="reviewList" class="word-grid review-grid"></div>
+        <div id="reviewEmpty" class="empty-state" hidden><div class="empty-icon" aria-hidden="true">✓</div><h2>这里暂时没有词</h2><p>完成学习或默写后，复习内容会自动出现在这里。</p></div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="wordEditor" class="editor-dialog">
+      <form method="dialog" class="dialog-shell">
+        <div class="dialog-heading">
+          <div><span class="eyebrow">编辑词库</span><h2 id="editorTitle">Day 3 · 添加 15 个词</h2><p>英文和中文为必填，音标可以留空。</p></div>
+          <button class="dialog-close" value="cancel" aria-label="关闭">×</button>
+        </div>
+        <div class="editor-head" aria-hidden="true"><span>#</span><span>英文</span><span>中文意思</span><span>音标（可选）</span></div>
+        <div id="editorRows" class="editor-rows"></div>
+        <div class="dialog-actions">
+          <button value="cancel" class="secondary-btn">取消</button>
+          <button id="saveWords" value="default" class="primary-btn">保存这一天</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="data.js"></script>
+    <script src="vocabulary-days-4-50.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
