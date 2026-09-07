@@ -2,7 +2,7 @@
 
 ## ECDICT
 
-Day 4–365 的预备词汇、中文释义和音标整理自 ECDICT：
+Day 4–50 的中文释义和音标，以及 Day 51–365 的备用词汇，整理自 ECDICT：
 https://github.com/skywind3000/ECDICT
 
 MIT License
