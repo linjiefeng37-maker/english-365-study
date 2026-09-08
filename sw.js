@@ -1,11 +1,11 @@
-const CACHE_NAME = "english365-pwa-v5";
+const CACHE_NAME = "english365-pwa-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=fluent-speech-18",
   "./data.js",
   "./vocabulary-days-4-50.js?v=desktop-day8-50-11",
-  "./app.js?v=fluent-speech-18",
+  "./app.js?v=aligned-speech-19",
   "./manifest.webmanifest",
   "./icon-180.png",
   "./icon-192.png",
