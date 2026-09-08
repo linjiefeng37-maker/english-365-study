@@ -1293,10 +1293,11 @@
       .join('<span aria-hidden="true">｜</span>');
     const chineseText = segments.map((part) => part.chinese).join("｜");
     const alignmentLabel = segments.map((part) => `${part.english}对应${part.chinese}`).join("，");
-    const columns = Math.max(1, segments.length);
-    const englishRow = segments.map((part, index) => `<b class="sentence-order-en" style="grid-column:${index + 1};grid-row:1">${highlightSentenceOrderPart(part.english, focus)}${index < columns - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : ""}</b>`).join("");
-    const chineseRow = segments.map((part, index) => `<span class="sentence-order-zh" lang="zh-CN" style="grid-column:${index + 1};grid-row:2">${escapeHTML(part.chinese)}${index < columns - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : ""}</span>`).join("");
-    const alignedHTML = `<span class="sentence-order-grid" style="--sentence-columns:${columns}" aria-label="${escapeHTML(alignmentLabel)}">${englishRow}${chineseRow}</span>`;
+    const pairs = segments.map((part, index) => {
+      const divider = index < segments.length - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : "";
+      return `<span class="sentence-order-pair"><b class="sentence-order-en">${highlightSentenceOrderPart(part.english, focus)}${divider}</b><span class="sentence-order-zh" lang="zh-CN">${escapeHTML(part.chinese)}${divider}</span></span>`;
+    }).join("");
+    const alignedHTML = `<span class="sentence-order-grid" aria-label="${escapeHTML(alignmentLabel)}">${pairs}</span>`;
     const speechChinese = segments
       .map((part) => part.chinese.replace(/\s*\/.*$/, ""))
       .join("，");
