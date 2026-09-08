@@ -1299,8 +1299,7 @@
     }).join("");
     const alignedHTML = `<span class="sentence-order-grid" aria-label="${escapeHTML(alignmentLabel)}">${pairs}</span>`;
     const alignedChinese = segments.map((part) => part.chinese.replace(/\s*\/.*$/, "")).join("");
-    const speechChinese = String(item.chinese || alignedChinese)
-      .replace(/[A-Za-z]+(?:[-'’][A-Za-z]+)*\s*[（(]([^）)]+)[）)]/g, "$1")
+    const speechChinese = alignedChinese
       .replace(/[，、；：｜]/g, "")
       .replace(/\s+/g, "")
       .trim();
