@@ -267,6 +267,15 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .sentence-number { display: inline-flex; margin-bottom: 8px; color: var(--indigo); font-weight: 850; font-size: .8rem; }
 .sentence-card h2 { margin: 0; font-size: clamp(1.45rem, 3.5vw, 2.15rem); letter-spacing: -.025em; }
 .sentence-zh { margin: 5px 0 16px; color: var(--muted); font-size: 1.05rem; }
+.sentence-card .sentence-order-grid,
+.sentence-now-playing .sentence-order-grid { display: grid; grid-template-columns: repeat(var(--sentence-columns), max-content); grid-template-rows: auto auto; align-items: baseline; max-width: 100%; margin: 0; padding: 1px 0 5px; overflow-x: auto; }
+.sentence-order-en { display: block; margin: 0; color: var(--ink); font: inherit; line-height: 1.2; white-space: nowrap; }
+.sentence-card .sentence-order-zh,
+.sentence-now-playing .sentence-order-zh { display: block; margin: 5px 0 0; color: var(--muted); font-size: 1rem; font-weight: 700; line-height: 1.25; letter-spacing: 0; white-space: nowrap; }
+.sentence-order-grid .sentence-order-divider { display: inline; margin: 0 .28em; color: #99a49b; font: inherit; }
+.sentence-now-playing .sentence-order-en,
+.sentence-now-playing .sentence-order-zh { color: white; }
+.sentence-now-playing .sentence-order-divider { color: rgba(255,255,255,.58); }
 .sentence-controls { display: flex; gap: 8px; }
 .sentence-controls button { min-width: 44px; height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 13px; background: #f1f6ee; color: var(--indigo); font-weight: 800; white-space: nowrap; }
 .sentence-controls button.active { color: white; background: var(--indigo); border-color: var(--indigo); }

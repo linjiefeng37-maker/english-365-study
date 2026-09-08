@@ -13,7 +13,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=pwa-app-14" />
+    <link rel="stylesheet" href="styles.css?v=english-order-16" />
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要内容</a>
@@ -168,7 +168,7 @@
 
       <section id="view-sentences" class="view" aria-labelledby="sentenceHeading" hidden>
         <div class="section-heading compact">
-          <div><span id="sentenceEyebrow" class="eyebrow">单日组句</span><h1 id="sentenceHeading">用今天的 15 个词练句子</h1><p id="sentenceHelp">只使用当前 Day 学习的词作为重点词；每句都能单独播放或连续播放。</p></div>
+          <div><span id="sentenceEyebrow" class="eyebrow">单日组句</span><h1 id="sentenceHeading">用今天的 15 个词练句子</h1><p id="sentenceHelp">英文和中文按原句顺序逐段对应，帮你理解英语句子结构。</p></div>
           <div class="heading-actions">
             <button id="playAllSentences" class="primary-btn">▶ 连续播放本日句子</button>
             <button id="refreshSentences" class="secondary-btn">↻ 换一组句子</button>
@@ -185,13 +185,13 @@
             </select>
           </label>
         </div>
-        <p id="sentenceSummary" class="review-summary sentence-page-summary">句子只标出当前 Day 的重点单词。</p>
+        <p id="sentenceSummary" class="review-summary sentence-page-summary">英中逐段对应，中文保持英语语序。</p>
         <section id="sentenceNowPlaying" class="sentence-now-playing" aria-live="polite" hidden>
           <span class="pulse-dot" aria-hidden="true"></span>
           <div>
             <small id="sentenceNowLabel">正在循环播放</small>
             <strong id="sentenceNowEnglish">准备播放句子</strong>
-            <span id="sentenceNowChinese">中文翻译会显示在这里</span>
+            <span id="sentenceNowChinese">英语语序直译会显示在这里</span>
           </div>
         </section>
         <div id="sentenceList" class="sentence-list"></div>
@@ -243,7 +243,7 @@
 
         <section id="reviewSentencesPanel" class="review-panel" role="tabpanel" hidden>
           <div class="review-toolbar">
-            <p id="reviewSentenceSummary" class="review-summary">每句会自然使用 2～5 个本周单词。</p>
+            <p id="reviewSentenceSummary" class="review-summary">英中逐段对应，中文保持英语语序。</p>
             <div class="heading-actions">
               <button id="playReviewSentences" class="primary-btn">▶ 连续播放句子</button>
               <button id="refreshReviewSentences" class="secondary-btn">↻ 换一组句子</button>
@@ -254,7 +254,7 @@
             <div>
               <small id="reviewSentenceNowLabel">正在播放本周句子</small>
               <strong id="reviewSentenceNowEnglish">准备播放句子</strong>
-              <span id="reviewSentenceNowChinese">中文意思会显示在这里</span>
+              <span id="reviewSentenceNowChinese">英语语序直译会显示在这里</span>
             </div>
           </section>
           <div id="reviewSentenceList" class="sentence-list"></div>
@@ -336,6 +336,6 @@
 
     <script src="data.js"></script>
     <script src="vocabulary-days-4-50.js?v=desktop-day8-50-11"></script>
-    <script src="app.js?v=pwa-app-14"></script>
+    <script src="app.js?v=english-order-16"></script>
   </body>
 </html>

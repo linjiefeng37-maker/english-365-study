@@ -1198,6 +1198,111 @@
       .trim();
   }
 
+  const sentenceOrderTerms = Object.freeze({
+    i: "我", me: "我", my: "我的", mine: "我的", we: "我们", us: "我们", our: "我们的",
+    you: "你", your: "你的", he: "他", him: "他", his: "他的", she: "她", her: "她的",
+    they: "他们", them: "他们", their: "他们的", it: "它", its: "它的",
+    the: "这个", a: "一个", an: "一个", this: "这个", these: "这些", another: "另一个",
+    some: "一些", several: "几个", one: "一个", two: "两个", four: "四个", both: "两个都",
+    am: "是", is: "是", are: "是", was: "是", were: "是", be: "是", been: "曾经是", being: "正在",
+    can: "能", cannot: "不能", could: "能够", may: "可能", might: "可能", will: "将会", would: "会", must: "必须",
+    to: "向", of: "……的", in: "在", on: "在……上", at: "在", by: "在……旁",
+    with: "和", without: "没有", for: "为了", behind: "在……后面", above: "在……上方",
+    across: "穿过", during: "在……期间", after: "在……之后", about: "关于", from: "从", into: "进入",
+    and: "和", or: "或者", but: "但是", if: "如果", because: "因为", why: "为什么", how: "怎样", no: "没有",
+    please: "请", today: "今天", now: "现在", here: "这里", out: "出去", down: "向下", first: "首先",
+    together: "一起", quickly: "快速地", forward: "向前", learning: "学习着", words: "单词",
+    went: "去了", people: "人们", war: "战争", felt: "感觉到", asked: "问了", thought: "思考了",
+    life: "人生", made: "做了", choice: "选择", less: "更少的", wait: "等待", smile: "微笑",
+    country: "国家", president: "总统", passed: "通过了", sent: "派出了", south: "南方", important: "重要的",
+    enemy: "敌人", clear: "清楚的", caused: "引起了", different: "不同的", children: "孩子们",
+    goes: "延伸", field: "田野", crowd: "人群", heard: "听到了", shouted: "喊叫了", wounded: "受伤的",
+    rested: "休息了", bed: "床", understood: "理解了", doctor: "医生", returned: "返回了", city: "城市",
+    local: "本地的", company: "公司", hard: "困难的", muscles: "肌肉", turn: "转", next: "下一个", street: "街道",
+    waited: "等待了", daughter: "女儿", child: "孩子", cried: "哭了", smiled: "微笑了", crossed: "穿过了",
+    strong: "强壮的", showed: "表现出", court: "法院", protected: "保护了", rights: "权利", wore: "穿着",
+    john: "约翰", decided: "决定了", plan: "计划", causes: "引起", hope: "希望", glad: "高兴的",
+  });
+
+  let sentenceVocabularyMeanings = null;
+
+  function getSentenceVocabularyMeanings() {
+    if (sentenceVocabularyMeanings) return new Map(sentenceVocabularyMeanings);
+    sentenceVocabularyMeanings = new Map();
+    (data.days || []).forEach((day) => (day.words || []).forEach((word) => {
+      const key = String(word.english || "").trim().toLowerCase();
+      const meaning = shortMeaning(word.chinese) || String(word.chinese || "").trim();
+      if (key && meaning && !sentenceVocabularyMeanings.has(key)) sentenceVocabularyMeanings.set(key, meaning);
+    }));
+    return new Map(sentenceVocabularyMeanings);
+  }
+
+  function sentenceMeaningMap(scopeWords = []) {
+    const meanings = getSentenceVocabularyMeanings();
+    scopeWords.forEach((word) => {
+      const key = String(word.english || "").trim().toLowerCase();
+      const meaning = shortMeaning(word.chinese) || String(word.chinese || "").trim();
+      if (key && meaning) meanings.set(key, meaning);
+    });
+    return meanings;
+  }
+
+  function sentenceTokenMeaning(token, index, tokens, meanings) {
+    const key = String(token || "").toLowerCase();
+    const previous = String(tokens[index - 1] || "").toLowerCase();
+    const next = String(tokens[index + 1] || "").toLowerCase();
+    if (key === "left") return previous === "turn" ? "向左" : "离开了";
+    if (key === "to") {
+      if (["learn", "wait", "change", "listen", "speak"].includes(next)) return "去";
+      if (["school", "city", "village", "the"].includes(next) || ["go", "returned"].includes(previous)) return "到";
+    }
+    if (key === "with" && previous === "help") return "关于";
+    return sentenceOrderTerms[key] || meanings.get(key) || token;
+  }
+
+  function sentenceOrderSegments(item, scopeWords = []) {
+    if (Array.isArray(item.breakdown) && item.breakdown.length) {
+      return item.breakdown
+        .filter((part) => Array.isArray(part) && part[0] && part[1])
+        .map(([english, chinese]) => ({ english: String(english), chinese: String(chinese) }));
+    }
+    const tokens = String(item.english || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*|\d+(?:\.\d+)?/g) || [];
+    const meanings = sentenceMeaningMap(scopeWords);
+    return tokens.map((english, index) => ({
+      english,
+      chinese: sentenceTokenMeaning(english, index, tokens, meanings),
+    }));
+  }
+
+  function sentenceFocusSet(focusWords = []) {
+    return new Set(focusWords.map((word) => String(word.english || word).toLowerCase()));
+  }
+
+  function highlightSentenceOrderPart(part, focus) {
+    const pieces = String(part).match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*|[^A-Za-z]+/g) || [part];
+    return pieces.map((piece) => focus.has(piece.toLowerCase())
+      ? `<mark class="week-focus-word">${escapeHTML(piece)}</mark>`
+      : escapeHTML(piece)).join("");
+  }
+
+  function sentenceOrderPresentation(item, scopeWords, focusWords) {
+    const segments = sentenceOrderSegments(item, scopeWords);
+    const focus = sentenceFocusSet(focusWords);
+    const englishHTML = segments
+      .map((part) => highlightSentenceOrderPart(part.english, focus))
+      .join('<span aria-hidden="true">｜</span>');
+    const chineseText = segments.map((part) => part.chinese).join("｜");
+    const alignmentLabel = segments.map((part) => `${part.english}对应${part.chinese}`).join("，");
+    const columns = Math.max(1, segments.length);
+    const englishRow = segments.map((part, index) => `<b class="sentence-order-en" style="grid-column:${index + 1};grid-row:1">${highlightSentenceOrderPart(part.english, focus)}${index < columns - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : ""}</b>`).join("");
+    const chineseRow = segments.map((part, index) => `<span class="sentence-order-zh" lang="zh-CN" style="grid-column:${index + 1};grid-row:2">${escapeHTML(part.chinese)}${index < columns - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : ""}</span>`).join("");
+    const alignedHTML = `<span class="sentence-order-grid" style="--sentence-columns:${columns}" aria-label="${escapeHTML(alignmentLabel)}">${englishRow}${chineseRow}</span>`;
+    const speechChinese = segments
+      .map((part) => part.chinese.replace(/\s*\/.*$/, ""))
+      .join("，");
+    return { englishHTML, chineseText, alignedHTML, speechChinese };
+  }
+
   function renderSentences() {
     const day = state.currentDay;
     const dayTotal = getWords(day).length;
@@ -1211,7 +1316,7 @@
       offset: state.sentenceOffset,
       englishOnly: false,
     });
-    $("#sentenceSummary").textContent = `Day ${day} · ${dayTotal}/15 个词 · 每句重点标出 2～5 个本日单词`;
+    $("#sentenceSummary").textContent = `Day ${day} · ${dayTotal}/15 个词 · 英中逐段对应，中文保持英语语序`;
     $("#playAllSentences").disabled = items.length === 0;
     $("#refreshSentences").disabled = items.length < 2;
   }
@@ -1259,11 +1364,7 @@
   }
 
   function dailySentenceEnglishHTML(item, day) {
-    const focus = new Set(dailyFocusWords(item, day).map((word) => word.english.toLowerCase()));
-    const parts = String(item.english).match(/[A-Za-z]+(?:['’][A-Za-z]+)?|[^A-Za-z]+/g) || [item.english];
-    return parts.map((part) => focus.has(part.toLowerCase())
-      ? `<mark class="week-focus-word">${escapeHTML(part)}</mark>`
-      : escapeHTML(part)).join("");
+    return sentenceOrderPresentation(item, dailyWords(day), dailyFocusWords(item, day)).englishHTML;
   }
 
   function dailyFocusListHTML(item, day, englishOnly) {
@@ -1271,12 +1372,13 @@
   }
 
   function dailySentenceCardHTML(item, index, day, englishOnly) {
+    const order = sentenceOrderPresentation(item, dailyWords(day), dailyFocusWords(item, day));
     const controls = englishOnly
       ? `<button class="daily-sentence-speak" data-index="${index}" aria-label="Play sentence once">🔊 <span>Play once</span></button><button class="daily-sentence-loop" data-index="${index}" aria-label="Loop this sentence">↻ <span>Loop</span></button>`
       : `<button class="daily-sentence-speak" data-index="${index}" aria-label="播放一次句子">🔊 <span>播放一次</span></button><button class="daily-sentence-loop" data-index="${index}" aria-label="循环播放句子">↻ <span>循环播放</span></button>`;
     return `<article class="sentence-card daily-sentence-card" data-sentence-index="${index}">
       <div class="sentence-top">
-        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${dailySentenceEnglishHTML(item, day)}</h2>${englishOnly ? "" : `<p class="sentence-zh">${escapeHTML(item.chinese)}</p>`}</div>
+        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${englishOnly ? order.englishHTML : order.alignedHTML}</h2></div>
         <div class="sentence-controls">${controls}</div>
       </div>
       <div class="weekly-focus-list"><strong>${englishOnly ? "DAILY FOCUS WORDS" : "本日重点单词"}</strong><div>${dailyFocusListHTML(item, day, englishOnly)}</div></div>
@@ -1301,10 +1403,11 @@
 
   function showDailySentencePlaying(item, card, context, day, englishOnly, label) {
     const { list, panel, label: labelElement, english: englishElement, chinese: chineseElement } = weeklySentenceElements(context);
+    const order = sentenceOrderPresentation(item, dailyWords(day), dailyFocusWords(item, day));
     panel.hidden = false;
     labelElement.textContent = label;
-    englishElement.innerHTML = dailySentenceEnglishHTML(item, day);
-    if (!englishOnly && chineseElement) chineseElement.textContent = item.chinese;
+    englishElement.innerHTML = englishOnly ? order.englishHTML : order.alignedHTML;
+    if (!englishOnly && chineseElement) chineseElement.hidden = true;
     $$(".week-focus-word", panel).forEach((word) => word.classList.add("is-speaking"));
     $$(".sentence-card", list).forEach((candidate) => {
       const current = candidate === card;
@@ -1314,9 +1417,12 @@
     scrollCardIntoView(card);
   }
 
-  async function speakDailySentence(item, token, englishOnly) {
+  async function speakDailySentence(item, token, englishOnly, day) {
     if (englishOnly) await speak(item.english, "en-US", token, listeningRate());
-    else await speakQueuedPair(item.english, item.chinese, token, listeningRate());
+    else {
+      const order = sentenceOrderPresentation(item, dailyWords(day), dailyFocusWords(item, day));
+      await speakQueuedPair(item.english, order.speechChinese, token, listeningRate());
+    }
   }
 
   async function playDailySentence(item, loop, button, context, day, englishOnly) {
@@ -1331,7 +1437,7 @@
     }
     showDailySentencePlaying(item, card, context, day, englishOnly, englishOnly ? "Now playing" : loop ? "正在循环播放这句话" : "正在播放这句话");
     do {
-      await speakDailySentence(item, token, englishOnly);
+      await speakDailySentence(item, token, englishOnly, day);
       if (loop) await wait(850 / speechRate(), token);
     } while (loop && token === playbackToken);
     if (token === playbackToken) stopPlayback(false);
@@ -1349,7 +1455,7 @@
       for (const [index, item] of items.entries()) {
         if (token !== playbackToken) break;
         showDailySentencePlaying(item, $$(".sentence-card", list)[index], context, day, englishOnly, englishOnly ? "Now playing" : "正在连续播放本日句子");
-        await speakDailySentence(item, token, englishOnly);
+        await speakDailySentence(item, token, englishOnly, day);
         await wait(650 / speechRate(), token);
       }
       if (token === playbackToken) await wait(950 / speechRate(), token);
@@ -1408,12 +1514,13 @@
   }
 
   function weeklySentenceCardHTML(item, index, week, englishOnly = false) {
+    const order = sentenceOrderPresentation(item, wordsForWeek(week), weeklyFocusWords(item, week));
     const controls = englishOnly
       ? `<button class="weekly-sentence-speak" data-index="${index}" aria-label="Play sentence once">🔊 <span>Play once</span></button><button class="weekly-sentence-loop" data-index="${index}" aria-label="Loop this sentence">↻ <span>Loop</span></button>`
       : `<button class="weekly-sentence-speak" data-index="${index}" aria-label="播放一次句子">🔊 <span>播放一次</span></button><button class="weekly-sentence-loop" data-index="${index}" aria-label="循环播放句子">↻ <span>循环播放</span></button>`;
     return `<article class="sentence-card weekly-sentence-card" data-sentence-index="${index}">
       <div class="sentence-top">
-        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${weeklySentenceEnglishHTML(item, week)}</h2>${englishOnly ? "" : `<p class="sentence-zh">${escapeHTML(item.chinese)}</p>`}</div>
+        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${englishOnly ? weeklySentenceEnglishHTML(item, week) : order.alignedHTML}</h2></div>
         <div class="sentence-controls">${controls}</div>
       </div>
       <div class="weekly-focus-list"><strong>${englishOnly ? "WEEKLY FOCUS WORDS" : "本周重点单词"}</strong><div>${weeklyFocusListHTML(item, week, englishOnly)}</div></div>
@@ -1465,10 +1572,11 @@
 
   function showWeeklySentencePlaying(item, card, context, week, englishOnly, label) {
     const { list, panel, label: labelElement, english: englishElement, chinese: chineseElement } = weeklySentenceElements(context);
+    const order = sentenceOrderPresentation(item, wordsForWeek(week), weeklyFocusWords(item, week));
     panel.hidden = false;
     labelElement.textContent = label;
-    englishElement.innerHTML = weeklySentenceEnglishHTML(item, week);
-    if (!englishOnly && chineseElement) chineseElement.textContent = item.chinese;
+    englishElement.innerHTML = englishOnly ? weeklySentenceEnglishHTML(item, week) : order.alignedHTML;
+    if (!englishOnly && chineseElement) chineseElement.hidden = true;
     $$(".week-focus-word", panel).forEach((word) => word.classList.add("is-speaking"));
     $$(".sentence-card", list).forEach((candidate) => {
       const current = candidate === card;
@@ -1478,9 +1586,12 @@
     scrollCardIntoView(card);
   }
 
-  async function speakWeeklySentence(item, token, englishOnly) {
+  async function speakWeeklySentence(item, token, englishOnly, week) {
     if (englishOnly) await speak(item.english, "en-US", token, listeningRate());
-    else await speakQueuedPair(item.english, item.chinese, token);
+    else {
+      const order = sentenceOrderPresentation(item, wordsForWeek(week), weeklyFocusWords(item, week));
+      await speakQueuedPair(item.english, order.speechChinese, token);
+    }
   }
 
   async function playWeeklySentence(item, loop, button, context, week, englishOnly) {
@@ -1495,7 +1606,7 @@
     }
     showWeeklySentencePlaying(item, card, context, week, englishOnly, englishOnly ? "Now playing" : loop ? "正在循环播放这句话" : "正在播放这句话");
     do {
-      await speakWeeklySentence(item, token, englishOnly);
+      await speakWeeklySentence(item, token, englishOnly, week);
       if (loop) await wait(850 / speechRate(), token);
     } while (loop && token === playbackToken);
     if (token === playbackToken) stopPlayback(false);
@@ -1513,7 +1624,7 @@
       for (const [index, item] of items.entries()) {
         if (token !== playbackToken) break;
         showWeeklySentencePlaying(item, $$(".sentence-card", list)[index], context, week, englishOnly, englishOnly ? "Now playing" : "正在连续播放本周句子");
-        await speakWeeklySentence(item, token, englishOnly);
+        await speakWeeklySentence(item, token, englishOnly, week);
         await wait(650 / speechRate(), token);
       }
       if (token === playbackToken) await wait(950 / speechRate(), token);
@@ -1712,7 +1823,7 @@
       scopedWords,
     });
     $("#reviewSentenceSummary").textContent = selectedEnd
-      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${scopedWords.length} 个已学单词 · 每句使用 2～5 个范围内重点词`
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${scopedWords.length} 个已学单词 · 英中逐段对应，中文保持英语语序`
       : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
     $("#refreshReviewSentences").disabled = items.length < 2;
