@@ -275,6 +275,9 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .review-panel[hidden] { display: none; }
 .week-picker { display: grid; flex: 1; gap: 6px; min-width: min(360px, 100%); color: var(--muted); font-size: .82rem; font-weight: 800; }
 .listening-speed-picker { flex: 0 1 220px; min-width: min(220px, 100%); }
+.sentence-scope-label { display: grid; flex: 1; gap: 4px; min-width: min(260px, 100%); }
+.sentence-scope-label span { color: var(--muted); font-size: .78rem; font-weight: 800; }
+.sentence-scope-label strong { color: var(--indigo-dark); font-size: 1.08rem; }
 .week-picker select {
   width: 100%; height: 48px; padding: 0 42px 0 14px; border: 1px solid var(--line); border-radius: 13px;
   color: var(--ink); background: var(--paper); font-weight: 800;
@@ -286,6 +289,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 #playReview.active { background: var(--danger); }
 #playReviewSentences.active, #playListeningSentences.active { background: var(--danger); }
 .review-summary { color: var(--muted); font-size: .9rem; }
+.sentence-page-summary { margin: 0 2px 16px; }
 .review-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .review-grid .word-card { min-height: 140px; }
 .weekly-focus-list { display: grid; gap: 9px; padding-top: 15px; border-top: 1px solid var(--line); }

@@ -14,6 +14,7 @@
     sentenceOffset: 0,
     reviewSentenceOffset: 0,
     listeningSentenceOffset: 0,
+    reviewEndDays: {},
     listeningRate: 0.78,
     englishTone: "natural",
     englishVoice: "auto",
@@ -39,7 +40,6 @@
   let reviewWeek = Math.ceil((state.currentDay || 1) / 7);
   let reviewMode = "words";
   let listeningWeek = reviewWeek;
-  let sentenceScope = "day";
   let playbackToken = 0;
   let activePlayback = null;
   let isPaused = false;
@@ -213,6 +213,7 @@
     bindNavigation();
     bindPlayer();
     bindDictation();
+    bindSentences();
     bindReview();
     bindListening();
     bindEditor();
@@ -246,15 +247,81 @@
     return result;
   }
 
+  function learnedThroughDay() {
+    return Math.max(1, Math.min(365, Number(state.currentDay) || 1));
+  }
+
+  function maxLearnedDayForWeek(week) {
+    const { start, end } = weekRange(week);
+    const learnedEnd = Math.min(end, learnedThroughDay());
+    return learnedEnd >= start ? learnedEnd : 0;
+  }
+
+  function selectedReviewEndDay(week) {
+    const { start } = weekRange(week);
+    const maxEnd = maxLearnedDayForWeek(week);
+    if (!maxEnd) return 0;
+    const stored = Number(state.reviewEndDays?.[week]);
+    return stored >= start && stored <= maxEnd ? stored : maxEnd;
+  }
+
+  function wordsThroughDay(week, endDay) {
+    const { start } = weekRange(week);
+    if (!endDay || endDay < start) return [];
+    const result = [];
+    for (let day = start; day <= endDay; day += 1) {
+      getWords(day).forEach((item, index) => result.push({ ...item, day, index }));
+    }
+    return result;
+  }
+
+  function learnedWordsForWeek(week) {
+    return wordsThroughDay(week, maxLearnedDayForWeek(week));
+  }
+
+  function reviewRangeWords(week = reviewWeek) {
+    return wordsThroughDay(week, selectedReviewEndDay(week));
+  }
+
+  function populateDayRangeSelect(selector, week, englishOnly = false) {
+    const select = $(selector);
+    if (!select) return;
+    const { start } = weekRange(week);
+    const maxEnd = maxLearnedDayForWeek(week);
+    if (!maxEnd) {
+      select.innerHTML = `<option value="">${englishOnly ? `Week ${week} not learned yet` : `第 ${week} 周还没有学到`}</option>`;
+      select.disabled = true;
+      return;
+    }
+    select.disabled = false;
+    select.innerHTML = Array.from({ length: maxEnd - start + 1 }, (_, index) => {
+      const end = start + index;
+      const count = wordsThroughDay(week, end).length;
+      const label = englishOnly
+        ? end === start ? `Day ${start} only · ${count} words` : `Day ${start}–Day ${end} · ${count} words`
+        : end === start ? `只复习 Day ${start} · ${count} 词` : `Day ${start}–Day ${end} · ${count} 词`;
+      return `<option value="${end}">${label}</option>`;
+    }).join("");
+    select.value = String(selectedReviewEndDay(week));
+  }
+
+  function setReviewEndDay(week, endDay) {
+    if (!state.reviewEndDays || typeof state.reviewEndDays !== "object") state.reviewEndDays = {};
+    const { start } = weekRange(week);
+    const maxEnd = maxLearnedDayForWeek(week);
+    const value = Number(endDay);
+    if (value >= start && value <= maxEnd) state.reviewEndDays[week] = value;
+  }
+
   function populateReviewWeekSelect() {
     const weeks = Array.from({ length: 53 }, (_, index) => {
       const week = index + 1;
       const { start, end } = weekRange(week);
-      const count = wordsForWeek(week).length;
+      const count = learnedWordsForWeek(week).length;
       return { week, start, end, count };
     });
-    const reviewOptions = weeks.map(({ week, start, end, count }) => `<option value="${week}">第 ${week} 周 · Day ${start}–${end} · ${count}/105 词</option>`).join("");
-    const listeningOptions = weeks.map(({ week, start, end, count }) => `<option value="${week}">Week ${week} · Day ${start}–${end} · ${count}/105 words</option>`).join("");
+    const reviewOptions = weeks.map(({ week, start, end, count }) => `<option value="${week}">第 ${week} 周 · Day ${start}–${end} · 已学 ${count}/105 词</option>`).join("");
+    const listeningOptions = weeks.map(({ week, start, end, count }) => `<option value="${week}">Week ${week} · Day ${start}–${end} · ${count}/105 learned words</option>`).join("");
     const reviewSelect = $("#reviewWeekSelect");
     const listeningSelect = $("#listeningWeekSelect");
     if (reviewSelect) {
@@ -265,12 +332,12 @@
       listeningSelect.innerHTML = listeningOptions;
       listeningSelect.value = String(listeningWeek);
     }
+    populateDayRangeSelect("#reviewDayRangeSelect", reviewWeek, false);
+    populateDayRangeSelect("#listeningDayRangeSelect", listeningWeek, true);
   }
 
   function bindNavigation() {
     $$(".nav-btn").forEach((button) => button.addEventListener("click", () => {
-      if (button.dataset.view === "sentences") sentenceScope = "day";
-      if (button.dataset.view === "listening") listeningWeek = reviewWeek;
       switchView(button.dataset.view);
     }));
     $(".brand").addEventListener("click", (event) => { event.preventDefault(); switchView("home"); });
@@ -304,10 +371,10 @@
     listeningWeek = reviewWeek;
     currentWordIndex = 0;
     dictationIndex = 0;
+    state.sentenceOffset = 0;
     saveState();
     $("#daySelect").value = String(day);
-    if ($("#reviewWeekSelect")) $("#reviewWeekSelect").value = String(reviewWeek);
-    if ($("#listeningWeekSelect")) $("#listeningWeekSelect").value = String(listeningWeek);
+    populateReviewWeekSelect();
     renderAll();
   }
 
@@ -616,12 +683,15 @@
     });
   }
 
-  function speakQueuedPair(english, chinese, token) {
+  function speakQueuedPair(english, chinese, token, rateMultiplier = 1) {
     return new Promise((resolve) => {
       if (!speechSupported() || token !== playbackToken) return resolve();
       const voices = window.speechSynthesis.getVoices();
       if (voices.length) speechVoices = voices;
       const utterances = [createUtterance(english, "en-US"), createUtterance(chinese, "zh-CN")];
+      utterances.forEach((utterance) => {
+        utterance.rate = Math.max(.5, utterance.rate * rateMultiplier);
+      });
       activeUtterances.push(...utterances);
       let remaining = utterances.length;
       let finished = false;
@@ -787,6 +857,10 @@
       button.classList.remove("active");
       button.innerHTML = button.closest("#view-listening") ? "↻ <span>Loop</span>" : "↻ <span>循环播放</span>";
     });
+    $$(".daily-sentence-loop").forEach((button) => {
+      button.classList.remove("active");
+      button.innerHTML = button.closest("#view-listening") ? "↻ <span>Loop</span>" : "↻ <span>循环播放</span>";
+    });
     $$(".loop-word").forEach((button) => {
       button.classList.remove("active");
       button.innerHTML = "↻ <span>循环</span>";
@@ -799,7 +873,7 @@
     const allSentencesButton = $("#playAllSentences");
     if (allSentencesButton) {
       allSentencesButton.classList.remove("active");
-      allSentencesButton.textContent = "▶ 循环播放本组";
+      allSentencesButton.textContent = "▶ 连续播放本日句子";
     }
     const reviewButton = $("#playReview");
     if (reviewButton) {
@@ -1068,122 +1142,161 @@
   }
 
   function renderSentences() {
-    const currentWords = sentenceScope === "week" ? wordsForWeek(reviewWeek) : getWords();
-    const list = $("#sentenceList");
-    const empty = $("#sentenceEmpty");
-    const range = weekRange(reviewWeek);
-    const weekly = sentenceScope === "week";
-    $("#sentenceEyebrow").textContent = weekly ? `第 ${reviewWeek} 周 · ${currentWords.length}/105 词` : "组句练习";
-    $("#sentenceHeading").textContent = weekly ? `Day ${range.start}–${range.end} 本周组句` : "把会的词连起来";
-    $("#sentenceHelp").textContent = weekly
-      ? "用本周词汇生成简单句；每句都能播放，也能整组循环。"
-      : "每句都能单独播放，也可以把本组句子一直循环播放。";
-    if (!currentWords.length) {
-      list.innerHTML = "";
-      list.hidden = true;
-      empty.hidden = false;
-      $("#sentenceEmpty h2").textContent = weekly ? "这一周还没有单词" : "先添加今天的单词";
-      $("#sentenceEmpty p").textContent = weekly ? "选择有词汇的学习周，再开始组句练习。" : "有了单词，就可以开始组句练习。";
-      return;
-    }
-    empty.hidden = true;
-    list.hidden = false;
-
-    const available = new Set(currentWords.map((item) => item.english.toLowerCase()));
-    eachStoredWord((item, day, index) => {
-      if (getStatus(day, index) === "mastered") available.add(item.english.toLowerCase());
+    const day = state.currentDay;
+    const dayTotal = getWords(day).length;
+    $("#sentenceRate").value = String(listeningRate());
+    $("#sentenceEyebrow").textContent = `Day ${day} · ${dayTotal}/15 词`;
+    $("#sentenceHeading").textContent = `Day ${day} 本日组句`;
+    $("#sentenceDayLabel").textContent = `Day ${day} · 本日 ${dayTotal} 个词`;
+    const items = renderDailySentenceList({
+      context: "sentences",
+      day,
+      offset: state.sentenceOffset,
+      englishOnly: false,
     });
-    let candidates = sentenceTemplates.filter((item) => item.focus.every((focus) => available.has(focus.toLowerCase())));
-    if (candidates.length < 3) {
-      sentenceTemplates.forEach((item) => {
-        if (!candidates.includes(item) && item.focus.some((focus) => available.has(focus.toLowerCase()))) candidates.push(item);
-      });
-    }
-    if (weekly) {
-      const weeklyExamples = currentWords.map((item) => sentence(
-        `I am learning the word “${item.english}”.`,
-        `我正在学习“${shortMeaning(item.chinese) || item.chinese}”这个词。`,
-        [item.english],
-        [["I am learning", "我正在学习"], [item.english, shortMeaning(item.chinese) || item.chinese]],
-      ));
-      candidates = [...candidates.slice(0, 4), ...weeklyExamples, ...candidates.slice(4)];
-    }
-    if (!candidates.length) candidates = currentWords.slice(0, 6).map((item) => sentence(
-      `I am learning the word “${item.english}”.`,
-      `我正在学习“${item.chinese}”这个词。`,
-      [item.english],
-      [["I am learning", "我正在学习"], [item.english, item.chinese]],
-    ));
-    const amount = Math.min(weekly ? 8 : 5, candidates.length);
-    const selected = Array.from({ length: amount }, (_, index) => candidates[(state.sentenceOffset + index) % candidates.length]);
-    list.innerHTML = selected.map((item, index) => `<article class="sentence-card">
-      <div class="sentence-top">
-        <div><span class="sentence-number">句子 ${String(index + 1).padStart(2, "0")}</span><h2>${escapeHTML(item.english)}</h2><p class="sentence-zh">${escapeHTML(item.chinese)}</p></div>
-        <div class="sentence-controls">
-          <button class="sentence-speak" data-index="${index}" aria-label="播放一次句子">🔊 <span>播放一次</span></button>
-          <button class="sentence-loop" data-index="${index}" aria-label="循环播放句子">↻ <span>循环播放</span></button>
-        </div>
-      </div>
-      <div class="breakdown">${item.breakdown.map(([en, zh]) => `<span><b>${escapeHTML(en)}</b> · ${escapeHTML(zh)}</span>`).join("")}</div>
-    </article>`).join("");
-    $$(".sentence-speak", list).forEach((button) => button.addEventListener("click", () => playSentence(selected[Number(button.dataset.index)], false, button)));
-    $$(".sentence-loop", list).forEach((button) => button.addEventListener("click", () => {
-      if (button.classList.contains("active")) stopPlayback();
-      else playSentence(selected[Number(button.dataset.index)], true, button);
-    }));
-    $("#playAllSentences").onclick = () => {
-      const button = $("#playAllSentences");
-      if (button.classList.contains("active")) stopPlayback();
-      else playSentenceGroup(selected, button);
-    };
-    $("#refreshSentences").onclick = () => {
-      state.sentenceOffset = (state.sentenceOffset + Math.max(1, amount)) % candidates.length;
-      saveState();
-      renderSentences();
-    };
+    $("#sentenceSummary").textContent = `Day ${day} · ${dayTotal}/15 个词 · 每句重点标出 2～5 个本日单词`;
+    $("#playAllSentences").disabled = items.length === 0;
+    $("#refreshSentences").disabled = items.length < 2;
   }
 
-  async function playSentence(item, loop, button) {
+  function dailyWords(day = state.currentDay) {
+    return getWords(day).map((item, index) => ({ ...item, day, index }));
+  }
+
+  function dailySentencesForDay(day, offset = 0) {
+    const words = dailyWords(day);
+    if (words.length < 2) return [];
+    const available = new Set(words.map((word) => word.english.toLowerCase()));
+    const source = [...(weeklySentenceLibrary[Math.ceil(day / 7)] || []), ...sentenceTemplates];
+    const seen = new Set();
+    const curated = source.reduce((items, item) => {
+      const focus = item.focus.filter((word) => available.has(word.toLowerCase())).slice(0, 5);
+      const key = item.english.toLowerCase();
+      if (focus.length >= 2 && !seen.has(key)) {
+        seen.add(key);
+        items.push({ ...item, focus });
+      }
+      return items;
+    }, []);
+    const fallback = [];
+    for (let index = 0; index < words.length && fallback.length < 8; index += 2) {
+      const first = words[index % words.length];
+      const second = words[(index + 1) % words.length];
+      if (!first || !second || first.english.toLowerCase() === second.english.toLowerCase()) continue;
+      fallback.push(sentence(
+        `Today I am learning two words: ${first.english} and ${second.english}.`,
+        `我今天在学习两个单词：${first.english}（${shortMeaning(first.chinese) || first.chinese}）和 ${second.english}（${shortMeaning(second.chinese) || second.chinese}）。`,
+        [first.english, second.english],
+        [],
+      ));
+    }
+    const candidates = [...curated, ...fallback];
+    const amount = Math.min(8, candidates.length);
+    const start = candidates.length ? Number(offset || 0) % candidates.length : 0;
+    return Array.from({ length: amount }, (_, index) => candidates[(start + index) % candidates.length]);
+  }
+
+  function dailyFocusWords(item, day) {
+    const available = new Map(dailyWords(day).map((word) => [word.english.toLowerCase(), word]));
+    return item.focus.map((word) => available.get(word.toLowerCase())).filter(Boolean).slice(0, 5);
+  }
+
+  function dailySentenceEnglishHTML(item, day) {
+    const focus = new Set(dailyFocusWords(item, day).map((word) => word.english.toLowerCase()));
+    const parts = String(item.english).match(/[A-Za-z]+(?:['’][A-Za-z]+)?|[^A-Za-z]+/g) || [item.english];
+    return parts.map((part) => focus.has(part.toLowerCase())
+      ? `<mark class="week-focus-word">${escapeHTML(part)}</mark>`
+      : escapeHTML(part)).join("");
+  }
+
+  function dailyFocusListHTML(item, day, englishOnly) {
+    return dailyFocusWords(item, day).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(shortMeaning(word.chinese) || word.chinese)}</small>`}</span>`).join("");
+  }
+
+  function dailySentenceCardHTML(item, index, day, englishOnly) {
+    const controls = englishOnly
+      ? `<button class="daily-sentence-speak" data-index="${index}" aria-label="Play sentence once">🔊 <span>Play once</span></button><button class="daily-sentence-loop" data-index="${index}" aria-label="Loop this sentence">↻ <span>Loop</span></button>`
+      : `<button class="daily-sentence-speak" data-index="${index}" aria-label="播放一次句子">🔊 <span>播放一次</span></button><button class="daily-sentence-loop" data-index="${index}" aria-label="循环播放句子">↻ <span>循环播放</span></button>`;
+    return `<article class="sentence-card daily-sentence-card" data-sentence-index="${index}">
+      <div class="sentence-top">
+        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${dailySentenceEnglishHTML(item, day)}</h2>${englishOnly ? "" : `<p class="sentence-zh">${escapeHTML(item.chinese)}</p>`}</div>
+        <div class="sentence-controls">${controls}</div>
+      </div>
+      <div class="weekly-focus-list"><strong>${englishOnly ? "DAILY FOCUS WORDS" : "本日重点单词"}</strong><div>${dailyFocusListHTML(item, day, englishOnly)}</div></div>
+    </article>`;
+  }
+
+  function renderDailySentenceList({ context, day, offset, englishOnly }) {
+    const items = dailySentencesForDay(day, offset);
+    const { list, empty } = weeklySentenceElements(context);
+    list.hidden = items.length === 0;
+    empty.hidden = items.length !== 0;
+    list.innerHTML = items.map((item, index) => dailySentenceCardHTML(item, index, day, englishOnly)).join("");
+    $$(".daily-sentence-speak", list).forEach((button) => button.addEventListener("click", () => {
+      playDailySentence(items[Number(button.dataset.index)], false, button, context, day, englishOnly);
+    }));
+    $$(".daily-sentence-loop", list).forEach((button) => button.addEventListener("click", () => {
+      if (button.classList.contains("active")) stopPlayback();
+      else playDailySentence(items[Number(button.dataset.index)], true, button, context, day, englishOnly);
+    }));
+    return items;
+  }
+
+  function showDailySentencePlaying(item, card, context, day, englishOnly, label) {
+    const { list, panel, label: labelElement, english: englishElement, chinese: chineseElement } = weeklySentenceElements(context);
+    panel.hidden = false;
+    labelElement.textContent = label;
+    englishElement.innerHTML = dailySentenceEnglishHTML(item, day);
+    if (!englishOnly && chineseElement) chineseElement.textContent = item.chinese;
+    $$(".week-focus-word", panel).forEach((word) => word.classList.add("is-speaking"));
+    $$(".sentence-card", list).forEach((candidate) => {
+      const current = candidate === card;
+      candidate.classList.toggle("current", current);
+      $$(".week-focus-word", candidate).forEach((word) => word.classList.toggle("is-speaking", current));
+    });
+    scrollCardIntoView(card);
+  }
+
+  async function speakDailySentence(item, token, englishOnly) {
+    if (englishOnly) await speak(item.english, "en-US", token, listeningRate());
+    else await speakQueuedPair(item.english, item.chinese, token, listeningRate());
+  }
+
+  async function playDailySentence(item, loop, button, context, day, englishOnly) {
+    if (!item) return;
     if (!speechSupported()) return showToast("当前浏览器不支持语音播放");
-    const token = beginPlayback(loop ? "sentence-loop" : "sentence");
-    markActivity();
-    if (loop) button.classList.add("active");
-    if (loop) button.innerHTML = "■ <span>停止循环</span>";
-    showPlayingSentence(item, button.closest(".sentence-card"), loop ? "正在循环播放这句话" : "正在播放这句话");
+    const token = beginPlayback(`${context}-sentence${loop ? "-loop" : ""}`);
+    const card = button.closest(".sentence-card");
+    markActivity(day);
+    if (loop) {
+      button.classList.add("active");
+      button.innerHTML = englishOnly ? "■ <span>Stop</span>" : "■ <span>停止循环</span>";
+    }
+    showDailySentencePlaying(item, card, context, day, englishOnly, englishOnly ? "Now playing" : loop ? "正在循环播放这句话" : "正在播放这句话");
     do {
-      await speakQueuedPair(item.english, item.chinese, token);
-      if (loop) await wait(900 / speechRate(), token);
+      await speakDailySentence(item, token, englishOnly);
+      if (loop) await wait(850 / speechRate(), token);
     } while (loop && token === playbackToken);
     if (token === playbackToken) stopPlayback(false);
   }
 
-  async function playSentenceGroup(items, button) {
+  async function playDailySentenceGroup(items, button, context, day, englishOnly) {
     if (!items.length) return;
     if (!speechSupported()) return showToast("当前浏览器不支持语音播放");
-    const token = beginPlayback("sentence-group");
-    markActivity();
+    const token = beginPlayback(`${context}-sentence-group`);
+    const { list } = weeklySentenceElements(context);
     button.classList.add("active");
-    button.textContent = "■ 停止循环";
+    button.textContent = englishOnly ? "■ Stop" : "■ 停止播放";
+    markActivity(day);
     while (token === playbackToken) {
       for (const [index, item] of items.entries()) {
         if (token !== playbackToken) break;
-        showPlayingSentence(item, $$("#sentenceList .sentence-card")[index], sentenceScope === "week" ? "正在循环播放本周句子" : "正在循环播放本组");
-        await speakQueuedPair(item.english, item.chinese, token);
+        showDailySentencePlaying(item, $$(".sentence-card", list)[index], context, day, englishOnly, englishOnly ? "Now playing" : "正在连续播放本日句子");
+        await speakDailySentence(item, token, englishOnly);
         await wait(650 / speechRate(), token);
       }
       if (token === playbackToken) await wait(950 / speechRate(), token);
     }
-  }
-
-  function showPlayingSentence(item, card, label) {
-    const panel = $("#sentenceNowPlaying");
-    if (!panel) return;
-    panel.hidden = false;
-    $("#sentenceNowLabel").textContent = label;
-    $("#sentenceNowEnglish").textContent = item.english;
-    $("#sentenceNowChinese").textContent = item.chinese;
-    $$(".sentence-card").forEach((candidate) => candidate.classList.toggle("current", candidate === card));
-    scrollCardIntoView(card);
   }
 
   function weeklyFocusWords(item, week) {
@@ -1203,12 +1316,12 @@
     }).join("");
   }
 
-  function weeklyFocusListHTML(item, week) {
-    return weeklyFocusWords(item, week).map((word) => `<span><b>${escapeHTML(word.english)}</b><small>${escapeHTML(shortMeaning(word.chinese) || word.chinese)}</small></span>`).join("");
+  function weeklyFocusListHTML(item, week, englishOnly = false) {
+    return weeklyFocusWords(item, week).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(shortMeaning(word.chinese) || word.chinese)}</small>`}</span>`).join("");
   }
 
-  function weeklySentencesForWeek(week, offset = 0) {
-    const words = wordsForWeek(week);
+  function weeklySentencesForWeek(week, offset = 0, scopedWords = wordsForWeek(week)) {
+    const words = scopedWords;
     if (words.length < 2) return [];
     const available = new Set(words.map((word) => word.english.toLowerCase()));
     const curated = (weeklySentenceLibrary[week] || []).filter((item) => {
@@ -1246,14 +1359,40 @@
         <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${weeklySentenceEnglishHTML(item, week)}</h2>${englishOnly ? "" : `<p class="sentence-zh">${escapeHTML(item.chinese)}</p>`}</div>
         <div class="sentence-controls">${controls}</div>
       </div>
-      ${englishOnly ? "" : `<div class="weekly-focus-list"><strong>本周重点单词</strong><div>${weeklyFocusListHTML(item, week)}</div></div>`}
+      <div class="weekly-focus-list"><strong>${englishOnly ? "WEEKLY FOCUS WORDS" : "本周重点单词"}</strong><div>${weeklyFocusListHTML(item, week, englishOnly)}</div></div>
     </article>`;
   }
 
-  function renderWeeklySentenceList({ context, week, offset, englishOnly }) {
-    const items = weeklySentencesForWeek(week, offset);
-    const list = context === "review" ? $("#reviewSentenceList") : $("#listeningSentenceList");
-    const empty = context === "review" ? $("#reviewSentenceEmpty") : $("#listeningSentenceEmpty");
+  function weeklySentenceElements(context) {
+    if (context === "sentences") return {
+      list: $("#sentenceList"),
+      empty: $("#sentenceEmpty"),
+      panel: $("#sentenceNowPlaying"),
+      label: $("#sentenceNowLabel"),
+      english: $("#sentenceNowEnglish"),
+      chinese: $("#sentenceNowChinese"),
+    };
+    if (context === "review") return {
+      list: $("#reviewSentenceList"),
+      empty: $("#reviewSentenceEmpty"),
+      panel: $("#reviewSentenceNowPlaying"),
+      label: $("#reviewSentenceNowLabel"),
+      english: $("#reviewSentenceNowEnglish"),
+      chinese: $("#reviewSentenceNowChinese"),
+    };
+    return {
+      list: $("#listeningSentenceList"),
+      empty: $("#listeningSentenceEmpty"),
+      panel: $("#listeningNowPlaying"),
+      label: $("#listeningNowLabel"),
+      english: $("#listeningNowEnglish"),
+      chinese: null,
+    };
+  }
+
+  function renderWeeklySentenceList({ context, week, offset, englishOnly, scopedWords }) {
+    const items = weeklySentencesForWeek(week, offset, scopedWords);
+    const { list, empty } = weeklySentenceElements(context);
     list.hidden = items.length === 0;
     empty.hidden = items.length !== 0;
     list.innerHTML = items.map((item, index) => weeklySentenceCardHTML(item, index, week, englishOnly)).join("");
@@ -1268,14 +1407,11 @@
   }
 
   function showWeeklySentencePlaying(item, card, context, week, englishOnly, label) {
-    const list = context === "review" ? $("#reviewSentenceList") : $("#listeningSentenceList");
-    const panel = context === "review" ? $("#reviewSentenceNowPlaying") : $("#listeningNowPlaying");
-    const labelElement = context === "review" ? $("#reviewSentenceNowLabel") : $("#listeningNowLabel");
-    const englishElement = context === "review" ? $("#reviewSentenceNowEnglish") : $("#listeningNowEnglish");
+    const { list, panel, label: labelElement, english: englishElement, chinese: chineseElement } = weeklySentenceElements(context);
     panel.hidden = false;
     labelElement.textContent = label;
     englishElement.innerHTML = weeklySentenceEnglishHTML(item, week);
-    if (!englishOnly) $("#reviewSentenceNowChinese").textContent = item.chinese;
+    if (!englishOnly && chineseElement) chineseElement.textContent = item.chinese;
     $$(".week-focus-word", panel).forEach((word) => word.classList.add("is-speaking"));
     $$(".sentence-card", list).forEach((candidate) => {
       const current = candidate === card;
@@ -1312,7 +1448,7 @@
     if (!items.length) return;
     if (!speechSupported()) return showToast("当前浏览器不支持语音播放");
     const token = beginPlayback(`${context}-sentence-group`);
-    const list = context === "review" ? $("#reviewSentenceList") : $("#listeningSentenceList");
+    const { list } = weeklySentenceElements(context);
     button.classList.add("active");
     button.textContent = englishOnly ? "■ Stop" : "■ 停止播放";
     markActivity(weekRange(week).start);
@@ -1341,13 +1477,51 @@
     renderReview();
   }
 
+  function syncSentenceRate(rate) {
+    state.listeningRate = Number(rate) || .78;
+    saveState();
+    if ($("#sentenceRate")) $("#sentenceRate").value = String(listeningRate());
+    if ($("#listeningRate")) $("#listeningRate").value = String(listeningRate());
+  }
+
+  function bindSentences() {
+    $("#sentenceRate").value = String(listeningRate());
+    $("#sentenceRate").addEventListener("change", (event) => {
+      stopPlayback(false);
+      syncSentenceRate(event.target.value);
+    });
+    $("#playAllSentences").addEventListener("click", () => {
+      if (activePlayback === "sentences-sentence-group") stopPlayback();
+      else playDailySentenceGroup(dailySentencesForDay(state.currentDay, state.sentenceOffset), $("#playAllSentences"), "sentences", state.currentDay, false);
+    });
+    $("#refreshSentences").addEventListener("click", () => {
+      stopPlayback(false);
+      state.sentenceOffset = Number(state.sentenceOffset || 0) + 1;
+      saveState();
+      renderSentences();
+      renderListening();
+    });
+  }
+
   function bindReview() {
     $("#reviewWeekSelect").addEventListener("change", (event) => {
       stopPlayback(false);
       reviewWeek = Number(event.target.value) || 1;
       state.reviewSentenceOffset = 0;
       saveState();
+      populateDayRangeSelect("#reviewDayRangeSelect", reviewWeek, false);
       renderReview();
+    });
+    $("#reviewDayRangeSelect").addEventListener("change", (event) => {
+      stopPlayback(false);
+      setReviewEndDay(reviewWeek, event.target.value);
+      state.reviewSentenceOffset = 0;
+      saveState();
+      renderReview();
+      if (listeningWeek === reviewWeek) {
+        populateDayRangeSelect("#listeningDayRangeSelect", listeningWeek, true);
+        renderListening();
+      }
     });
     $$(".review-mode-btn").forEach((button) => button.addEventListener("click", () => setReviewMode(button.dataset.reviewMode)));
     $("#makeWeekSentences").addEventListener("click", () => {
@@ -1356,7 +1530,9 @@
     $("#openEnglishListening").addEventListener("click", () => {
       stopPlayback(false);
       listeningWeek = reviewWeek;
+      state.listeningSentenceOffset = 0;
       $("#listeningWeekSelect").value = String(listeningWeek);
+      populateDayRangeSelect("#listeningDayRangeSelect", listeningWeek, true);
       switchView("listening");
     });
     $$(".filter-btn").forEach((button) => button.addEventListener("click", () => {
@@ -1371,7 +1547,7 @@
     });
     $("#playReviewSentences").addEventListener("click", () => {
       if (activePlayback === "review-sentence-group") stopPlayback();
-      else playWeeklySentenceGroup(weeklySentencesForWeek(reviewWeek, state.reviewSentenceOffset), $("#playReviewSentences"), "review", reviewWeek, false);
+      else playWeeklySentenceGroup(weeklySentencesForWeek(reviewWeek, state.reviewSentenceOffset, reviewRangeWords(reviewWeek)), $("#playReviewSentences"), "review", reviewWeek, false);
     });
     $("#refreshReviewSentences").addEventListener("click", () => {
       stopPlayback(false);
@@ -1385,19 +1561,30 @@
     $("#listeningRate").value = String(listeningRate());
     $("#listeningRate").addEventListener("change", (event) => {
       stopPlayback(false);
-      state.listeningRate = Number(event.target.value) || .78;
-      saveState();
+      syncSentenceRate(event.target.value);
     });
     $("#listeningWeekSelect").addEventListener("change", (event) => {
       stopPlayback(false);
       listeningWeek = Number(event.target.value) || 1;
       state.listeningSentenceOffset = 0;
       saveState();
+      populateDayRangeSelect("#listeningDayRangeSelect", listeningWeek, true);
       renderListening();
+    });
+    $("#listeningDayRangeSelect").addEventListener("change", (event) => {
+      stopPlayback(false);
+      setReviewEndDay(listeningWeek, event.target.value);
+      state.listeningSentenceOffset = 0;
+      saveState();
+      renderListening();
+      if (reviewWeek === listeningWeek) {
+        populateDayRangeSelect("#reviewDayRangeSelect", reviewWeek, false);
+        renderReview();
+      }
     });
     $("#playListeningSentences").addEventListener("click", () => {
       if (activePlayback === "listening-sentence-group") stopPlayback();
-      else playWeeklySentenceGroup(weeklySentencesForWeek(listeningWeek, state.listeningSentenceOffset), $("#playListeningSentences"), "listening", listeningWeek, true);
+      else playWeeklySentenceGroup(weeklySentencesForWeek(listeningWeek, state.listeningSentenceOffset, reviewRangeWords(listeningWeek)), $("#playListeningSentences"), "listening", listeningWeek, true);
     });
     $("#refreshListeningSentences").addEventListener("click", () => {
       stopPlayback(false);
@@ -1408,7 +1595,7 @@
   }
 
   function reviewWords() {
-    return wordsForWeek(reviewWeek).filter((item) => {
+    return reviewRangeWords(reviewWeek).filter((item) => {
       const { day, index } = item;
       const status = getStatus(day, index);
       const mistakes = getMistakes(day, index);
@@ -1421,6 +1608,7 @@
 
   function renderReview() {
     $("#reviewWeekSelect").value = String(reviewWeek);
+    populateDayRangeSelect("#reviewDayRangeSelect", reviewWeek, false);
     $$(".review-mode-btn").forEach((button) => {
       const active = button.dataset.reviewMode === reviewMode;
       button.classList.toggle("active", active);
@@ -1435,9 +1623,12 @@
     const words = reviewWords();
     const list = $("#reviewList");
     const range = weekRange(reviewWeek);
-    const weeklyTotal = wordsForWeek(reviewWeek).length;
+    const selectedEnd = selectedReviewEndDay(reviewWeek);
+    const reviewTotal = reviewRangeWords(reviewWeek).length;
     const label = reviewFilter === "mastered" ? "已掌握" : reviewFilter === "mistakes" ? "易错词" : "本周全部";
-    $("#reviewSummary").textContent = `第 ${reviewWeek} 周 · Day ${range.start}–${range.end} · 显示 ${words.length}/${weeklyTotal || 0} 个词 · ${label}`;
+    $("#reviewSummary").textContent = selectedEnd
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · 显示 ${words.length}/${reviewTotal} 个词 · ${label}`
+      : `第 ${reviewWeek} 周尚未学到，不显示后面的单词`;
     list.hidden = words.length === 0;
     $("#reviewEmpty").hidden = words.length !== 0;
     $("#playReview").disabled = words.length === 0;
@@ -1454,28 +1645,39 @@
 
   function renderReviewSentences() {
     const range = weekRange(reviewWeek);
-    const weeklyTotal = wordsForWeek(reviewWeek).length;
+    const selectedEnd = selectedReviewEndDay(reviewWeek);
+    const scopedWords = reviewRangeWords(reviewWeek);
     const items = renderWeeklySentenceList({
       context: "review",
       week: reviewWeek,
       offset: state.reviewSentenceOffset,
       englishOnly: false,
+      scopedWords,
     });
-    $("#reviewSentenceSummary").textContent = `第 ${reviewWeek} 周 · Day ${range.start}–${range.end} · ${weeklyTotal}/105 个词 · 每句自然使用 2～5 个本周重点单词`;
+    $("#reviewSentenceSummary").textContent = selectedEnd
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${scopedWords.length} 个已学单词 · 每句使用 2～5 个范围内重点词`
+      : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
     $("#refreshReviewSentences").disabled = items.length < 2;
   }
 
   function renderListening() {
-    const select = $("#listeningWeekSelect");
-    if (select) select.value = String(listeningWeek);
+    const range = weekRange(listeningWeek);
+    const selectedEnd = selectedReviewEndDay(listeningWeek);
+    const scopedWords = reviewRangeWords(listeningWeek);
+    $("#listeningWeekSelect").value = String(listeningWeek);
+    populateDayRangeSelect("#listeningDayRangeSelect", listeningWeek, true);
     $("#listeningRate").value = String(listeningRate());
     const items = renderWeeklySentenceList({
       context: "listening",
       week: listeningWeek,
       offset: state.listeningSentenceOffset,
       englishOnly: true,
+      scopedWords,
     });
+    $("#listeningSummary").textContent = selectedEnd
+      ? `Week ${listeningWeek} · Day ${range.start}–Day ${selectedEnd} · ${scopedWords.length} learned words · English only`
+      : `Week ${listeningWeek} has not been learned yet`;
     $("#playListeningSentences").disabled = items.length === 0;
     $("#refreshListeningSentences").disabled = items.length < 2;
   }
@@ -1551,6 +1753,7 @@
     Object.keys(state.statuses).filter((key) => key.startsWith(`${state.currentDay}:`)).forEach((key) => delete state.statuses[key]);
     Object.keys(state.mistakes).filter((key) => key.startsWith(`${state.currentDay}:`)).forEach((key) => delete state.mistakes[key]);
     state.dictation[state.currentDay] = { correct: 0, total: 0 };
+    state.sentenceOffset = 0;
     currentWordIndex = 0;
     dictationIndex = 0;
     saveState();

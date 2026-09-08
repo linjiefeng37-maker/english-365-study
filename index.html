@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#4f725c" />
     <meta name="description" content="每天 15 个单词，支持磨耳朵、默写、组句和复习的零基础英语学习工具。" />
     <title>英语 365 · 每天学 15 个词</title>
-    <link rel="stylesheet" href="styles.css?v=weekly-review-sentences-8" />
+    <link rel="stylesheet" href="styles.css?v=review-range-week-listening-13" />
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要内容</a>
@@ -160,12 +160,24 @@
 
       <section id="view-sentences" class="view" aria-labelledby="sentenceHeading" hidden>
         <div class="section-heading compact">
-          <div><span id="sentenceEyebrow" class="eyebrow">组句练习</span><h1 id="sentenceHeading">把会的词连起来</h1><p id="sentenceHelp">每句都能单独播放，也可以把本组句子一直循环播放。</p></div>
+          <div><span id="sentenceEyebrow" class="eyebrow">单日组句</span><h1 id="sentenceHeading">用今天的 15 个词练句子</h1><p id="sentenceHelp">只使用当前 Day 学习的词作为重点词；每句都能单独播放或连续播放。</p></div>
           <div class="heading-actions">
-            <button id="playAllSentences" class="primary-btn">▶ 循环播放本组</button>
+            <button id="playAllSentences" class="primary-btn">▶ 连续播放本日句子</button>
             <button id="refreshSentences" class="secondary-btn">↻ 换一组句子</button>
           </div>
         </div>
+        <div class="review-week-row">
+          <div class="sentence-scope-label"><span>当前组句范围</span><strong id="sentenceDayLabel">Day 3 · 本日 15 个词</strong></div>
+          <label class="week-picker listening-speed-picker" for="sentenceRate">
+            <span>句子语速</span>
+            <select id="sentenceRate" aria-label="选择句子播放速度">
+              <option value="0.65">慢速</option>
+              <option value="0.78" selected>舒缓</option>
+              <option value="1">正常</option>
+            </select>
+          </label>
+        </div>
+        <p id="sentenceSummary" class="review-summary sentence-page-summary">句子只标出当前 Day 的重点单词。</p>
         <section id="sentenceNowPlaying" class="sentence-now-playing" aria-live="polite" hidden>
           <span class="pulse-dot" aria-hidden="true"></span>
           <div>
@@ -176,13 +188,13 @@
         </section>
         <div id="sentenceList" class="sentence-list"></div>
         <div id="sentenceEmpty" class="empty-state" hidden>
-          <div class="empty-icon" aria-hidden="true">Aa</div><h2>先添加今天的单词</h2><p>有了单词，就可以开始组句练习。</p>
+          <div class="empty-icon" aria-hidden="true">Aa</div><h2>这一天还没有足够的单词</h2><p>至少添加两个单词后，就能开始组句练习。</p>
         </div>
       </section>
 
       <section id="view-review" class="view" aria-labelledby="reviewHeading" hidden>
         <div class="section-heading compact">
-          <div><span class="eyebrow">每周复习</span><h1 id="reviewHeading">7 天一组，把记忆变牢</h1><p>每周 105 个词，可以复习单词，也可以用本周词汇练简单句。</p></div>
+          <div><span class="eyebrow">每周复习</span><h1 id="reviewHeading">7 天一组，把记忆变牢</h1><p>每周最多 105 个词，只复习当前已经学到的累计 Day 范围。</p></div>
         </div>
         <div class="review-mode-tabs" role="tablist" aria-label="选择复习模式">
           <button class="review-mode-btn active" data-review-mode="words" role="tab" aria-selected="true">Aa 单词复习</button>
@@ -193,6 +205,12 @@
             <span>选择复习周</span>
             <select id="reviewWeekSelect" aria-label="选择要复习的星期">
               <option value="1">第 1 周 · Day 1–7 · 105/105 词</option>
+            </select>
+          </label>
+          <label class="week-picker" for="reviewDayRangeSelect">
+            <span>复习到哪一天</span>
+            <select id="reviewDayRangeSelect" aria-label="选择本周累计复习到哪一天">
+              <option value="1">只复习 Day 1</option>
             </select>
           </label>
           <div class="review-week-actions">
@@ -251,6 +269,12 @@
               <option value="1">Week 1 · Day 1–7 · 105/105 words</option>
             </select>
           </label>
+          <label class="week-picker" for="listeningDayRangeSelect">
+            <span>Listen through</span>
+            <select id="listeningDayRangeSelect" aria-label="Choose how many learned days to include">
+              <option value="1">Day 1 only</option>
+            </select>
+          </label>
           <label class="week-picker listening-speed-picker" for="listeningRate">
             <span>Listening speed</span>
             <select id="listeningRate" aria-label="Choose English listening speed">
@@ -260,6 +284,7 @@
             </select>
           </label>
         </div>
+        <p id="listeningSummary" class="review-summary sentence-page-summary">Weekly English sentences without Chinese.</p>
         <section id="listeningNowPlaying" class="sentence-now-playing english-only-now" aria-live="polite" hidden>
           <span class="pulse-dot" aria-hidden="true"></span>
           <div>
@@ -268,7 +293,7 @@
           </div>
         </section>
         <div id="listeningSentenceList" class="sentence-list english-only-list"></div>
-        <div id="listeningSentenceEmpty" class="empty-state" hidden><div class="empty-icon" aria-hidden="true">♫</div><h2>No sentences yet</h2><p>Add at least two words to this week first.</p></div>
+        <div id="listeningSentenceEmpty" class="empty-state" hidden><div class="empty-icon" aria-hidden="true">♫</div><h2>No sentences yet</h2><p>Learn at least two words in this week first.</p></div>
       </section>
     </main>
 
@@ -290,7 +315,7 @@
     </dialog>
 
     <script src="data.js"></script>
-    <script src="vocabulary-days-4-50.js?v=desktop-1-50-2"></script>
-    <script src="app.js?v=weekly-review-sentences-8"></script>
+    <script src="vocabulary-days-4-50.js?v=desktop-day8-50-11"></script>
+    <script src="app.js?v=review-range-week-listening-13"></script>
   </body>
 </html>
