@@ -48,6 +48,7 @@
   let voiceActive = false;
   let speechVoices = [];
   let activeUtterances = [];
+  let deferredInstallPrompt = null;
 
   const sentenceTemplates = [
     sentence("I want to learn.", "我想学习。", ["want", "learn"], [["I", "我"], ["want", "想要"], ["to learn", "学习"]]),
@@ -207,6 +208,61 @@
     return streak;
   }
 
+  function isStandaloneApp() {
+    return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true);
+  }
+
+  function showInstallHelp() {
+    const dialog = $("#installHelp");
+    const title = $("#installHelpTitle");
+    const steps = $("#installHelpSteps");
+    const isiPhone = /iPhone|iPad|iPod/i.test(window.navigator.userAgent || "");
+    const isLocalFile = window.location.protocol === "file:";
+    if (isLocalFile) {
+      title.textContent = "请先打开正式线上网站";
+      steps.innerHTML = "<li>在手机浏览器打开英语 365 的正式网址。</li><li>再点页面上方的“安装 App”。</li>";
+    } else if (isiPhone) {
+      title.textContent = "在 iPhone 上安装";
+      steps.innerHTML = "<li>使用 Safari 打开这个网站。</li><li>点击底部的“分享”按钮。</li><li>向下找到“添加到主屏幕”，再点“添加”。</li>";
+    } else {
+      title.textContent = "安装到手机桌面";
+      steps.innerHTML = "<li>打开浏览器菜单。</li><li>选择“安装应用”或“添加到主屏幕”。</li><li>确认安装，之后从桌面图标打开。</li>";
+    }
+    dialog.showModal();
+  }
+
+  function setupAppInstall() {
+    const button = $("#installApp");
+    if (!button) return;
+    button.hidden = isStandaloneApp();
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      button.hidden = false;
+    });
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      button.hidden = true;
+      showToast("英语 365 已安装到桌面");
+    });
+    button.addEventListener("click", async () => {
+      if (isStandaloneApp()) {
+        button.hidden = true;
+        return showToast("你已经在使用英语 365 App");
+      }
+      if (!deferredInstallPrompt) return showInstallHelp();
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice.catch(() => null);
+      deferredInstallPrompt = null;
+      if (choice?.outcome !== "accepted") showInstallHelp();
+    });
+    if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
+      window.addEventListener("load", () => {
+        window.navigator.serviceWorker.register("./sw.js").then((registration) => registration.update()).catch(() => {});
+      });
+    }
+  }
+
   function init() {
     populateDaySelect();
     populateReviewWeekSelect();
@@ -217,6 +273,7 @@
     bindReview();
     bindListening();
     bindEditor();
+    setupAppInstall();
     setupSpeechVoices();
     setupVoiceControl();
     renderAll();

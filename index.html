@@ -2,11 +2,18 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#4f725c" />
     <meta name="description" content="每天 15 个单词，支持磨耳朵、默写、组句和复习的零基础英语学习工具。" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="英语 365" />
     <title>英语 365 · 每天学 15 个词</title>
-    <link rel="stylesheet" href="styles.css?v=review-range-week-listening-13" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
+    <link rel="stylesheet" href="styles.css?v=pwa-app-14" />
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要内容</a>
@@ -23,6 +30,7 @@
         <button class="nav-btn" data-view="review"><span aria-hidden="true">↻</span> 复习</button>
         <button class="nav-btn" data-view="listening"><span aria-hidden="true">♫</span> 纯英语</button>
       </nav>
+      <button id="installApp" class="install-app-btn" type="button"><span aria-hidden="true">⇩</span> 安装 App</button>
     </header>
 
     <main id="main" class="app-shell">
@@ -314,8 +322,20 @@
       </form>
     </dialog>
 
+    <dialog id="installHelp" class="install-dialog">
+      <form method="dialog" class="install-dialog-card">
+        <button class="dialog-close install-dialog-close" value="cancel" aria-label="关闭安装说明">×</button>
+        <div class="install-app-mark" aria-hidden="true">A</div>
+        <span class="eyebrow">安装到手机桌面</span>
+        <h2 id="installHelpTitle">把英语 365 变成 App</h2>
+        <ol id="installHelpSteps" class="install-steps"></ol>
+        <p class="install-note">安装后仍使用现在的网站和学习记录，不需要注册新账号。</p>
+        <button class="primary-btn install-done" value="cancel">我知道了</button>
+      </form>
+    </dialog>
+
     <script src="data.js"></script>
     <script src="vocabulary-days-4-50.js?v=desktop-day8-50-11"></script>
-    <script src="app.js?v=review-range-week-listening-13"></script>
+    <script src="app.js?v=pwa-app-14"></script>
   </body>
 </html>

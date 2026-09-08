@@ -61,6 +61,11 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   backdrop-filter: blur(16px);
 }
 
+@supports (padding: max(0px)) {
+  .topbar { padding-top: max(12px, env(safe-area-inset-top)); }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+}
+
 .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; min-width: max-content; }
 .brand-mark {
   display: grid; place-items: center; width: 44px; height: 44px; border-radius: 15px;
@@ -79,6 +84,13 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .nav-btn span { margin-right: 5px; }
 .nav-btn:hover { background: #e7efe4; color: var(--ink); }
 .nav-btn.active { background: var(--indigo-soft); color: var(--indigo-dark); }
+
+.install-app-btn {
+  min-width: max-content; min-height: 44px; padding: 9px 15px; border: 1px solid #bed1bd; border-radius: 13px;
+  color: white; background: var(--indigo); font-weight: 850; box-shadow: 0 7px 17px rgba(48,79,59,.15);
+}
+.install-app-btn:hover { background: var(--indigo-dark); transform: translateY(-1px); }
+.install-app-btn[hidden] { display: none; }
 
 .app-shell { width: min(1180px, calc(100% - 44px)); margin: 26px auto 80px; }
 
@@ -321,6 +333,17 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .editor-row input:focus { background: var(--paper); border-color: var(--indigo); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; }
 
+.install-dialog { width: min(480px, calc(100% - 28px)); padding: 0; border: 0; border-radius: 24px; background: var(--paper); box-shadow: 0 26px 70px rgba(41,55,47,.28); }
+.install-dialog::backdrop { background: rgba(35,49,40,.56); backdrop-filter: blur(4px); }
+.install-dialog-card { position: relative; padding: 30px; text-align: center; }
+.install-dialog-close { position: absolute; top: 14px; right: 14px; }
+.install-app-mark { width: 72px; height: 72px; margin: 0 auto 16px; display: grid; place-items: center; border-radius: 22px; color: white; background: linear-gradient(135deg, #66866e, var(--indigo-dark)); box-shadow: 0 12px 26px rgba(48,79,59,.22); font-size: 2rem; font-weight: 900; }
+.install-dialog h2 { margin: 7px 0 18px; font-size: 1.65rem; }
+.install-steps { display: grid; gap: 10px; margin: 0; padding-left: 1.5rem; text-align: left; color: var(--ink); }
+.install-steps li { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #f3f7f0; }
+.install-note { margin: 18px 0; color: var(--muted); font-size: .9rem; }
+.install-done { width: 100%; }
+
 @media (max-width: 900px) {
   .topbar { align-items: flex-start; }
   .main-nav { overflow-x: auto; }
@@ -337,6 +360,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   .topbar { position: static; padding: 14px 16px; flex-direction: column; gap: 12px; }
   .brand small { display: none; }
   .main-nav { width: 100%; padding-bottom: 2px; }
+  .install-app-btn { width: 100%; }
   .nav-btn { flex: 1 0 auto; padding: 9px 11px; font-size: .87rem; }
   .app-shell { width: min(100% - 24px, 1180px); margin-top: 14px; }
   .day-bar { align-items: stretch; padding: 16px; flex-direction: column; gap: 15px; }

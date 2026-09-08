@@ -1,0 +1,34 @@
+{
+  "id": "./",
+  "name": "英语 365 · 每天学 15 个词",
+  "short_name": "英语 365",
+  "description": "每天学习 15 个英语单词，支持磨耳朵、默写、组句和每周复习。",
+  "lang": "zh-CN",
+  "start_url": "./#home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#edf4e9",
+  "theme_color": "#4f725c",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
