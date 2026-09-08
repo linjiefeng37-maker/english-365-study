@@ -1298,9 +1298,12 @@
       return `<span class="sentence-order-pair"><b class="sentence-order-en">${highlightSentenceOrderPart(part.english, focus)}${divider}</b><span class="sentence-order-zh" lang="zh-CN">${escapeHTML(part.chinese)}${divider}</span></span>`;
     }).join("");
     const alignedHTML = `<span class="sentence-order-grid" aria-label="${escapeHTML(alignmentLabel)}">${pairs}</span>`;
-    const speechChinese = segments
-      .map((part) => part.chinese.replace(/\s*\/.*$/, ""))
-      .join("，");
+    const alignedChinese = segments.map((part) => part.chinese.replace(/\s*\/.*$/, "")).join("");
+    const speechChinese = String(item.chinese || alignedChinese)
+      .replace(/[A-Za-z]+(?:[-'’][A-Za-z]+)*\s*[（(]([^）)]+)[）)]/g, "$1")
+      .replace(/[，、；：｜]/g, "")
+      .replace(/\s+/g, "")
+      .trim();
     return { englishHTML, chineseText, alignedHTML, speechChinese };
   }
 
