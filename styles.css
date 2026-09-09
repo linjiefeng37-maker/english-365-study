@@ -310,7 +310,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .filter-btn { min-height: 40px; padding: 8px 14px; border: 0; border-radius: 11px; background: transparent; color: var(--muted); font-weight: 750; }
 .filter-btn.active { color: var(--ink); background: var(--paper); box-shadow: 0 3px 10px rgba(47,69,54,.08); }
 #playReview.active { background: var(--danger); }
-#playReviewSentences.active, #playListeningSentences.active { background: var(--danger); }
+#playReviewSentences.active, #shadowReviewSentences.active, #playListeningSentences.active { color: white; background: var(--danger); border-color: var(--danger); }
 .review-summary { color: var(--muted); font-size: .9rem; }
 .sentence-page-summary { margin: 0 2px 16px; }
 .review-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
