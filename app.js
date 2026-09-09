@@ -942,6 +942,11 @@
       reviewSentencesButton.classList.remove("active");
       reviewSentencesButton.textContent = "▶ 连续播放句子";
     }
+    const shadowReviewButton = $("#shadowReviewSentences");
+    if (shadowReviewButton) {
+      shadowReviewButton.classList.remove("active");
+      shadowReviewButton.textContent = "🎙 跟读练习";
+    }
     const listeningSentencesButton = $("#playListeningSentences");
     if (listeningSentencesButton) {
       listeningSentencesButton.classList.remove("active");
@@ -1634,6 +1639,36 @@
     }
   }
 
+  function shadowingPauseMs(english) {
+    const wordCount = String(english || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*/g)?.length || 1;
+    return Math.min(9000, Math.max(3200, (wordCount * 720) / listeningRate()));
+  }
+
+  async function playReviewShadowing(items, button, week) {
+    if (!items.length) return showToast("当前范围还没有可跟读的句子");
+    if (!speechSupported()) return showToast("当前浏览器不支持语音播放");
+    const token = beginPlayback("review-shadowing");
+    const { list, label } = weeklySentenceElements("review");
+    button.classList.add("active");
+    button.textContent = "■ 停止跟读";
+    markActivity(weekRange(week).start);
+
+    for (const [index, item] of items.entries()) {
+      if (token !== playbackToken) break;
+      const card = $$(".sentence-card", list)[index];
+      showWeeklySentencePlaying(item, card, "review", week, false, "先听英文句子");
+      await speak(item.english, "en-US", token, listeningRate());
+      if (token !== playbackToken) break;
+      label.textContent = "现在请跟读";
+      await wait(shadowingPauseMs(item.english), token);
+    }
+
+    if (token === playbackToken) {
+      stopPlayback(false);
+      showToast("本组跟读完成");
+    }
+  }
+
   function setReviewMode(mode) {
     if (!["words", "sentences"].includes(mode)) return;
     stopPlayback(false);
@@ -1719,6 +1754,10 @@
     $("#playReviewSentences").addEventListener("click", () => {
       if (activePlayback === "review-sentence-group") stopPlayback();
       else playWeeklySentenceGroup(weeklySentencesForWeek(reviewWeek, state.reviewSentenceOffset, reviewRangeWords(reviewWeek)), $("#playReviewSentences"), "review", reviewWeek, false);
+    });
+    $("#shadowReviewSentences").addEventListener("click", () => {
+      if (activePlayback === "review-shadowing") stopPlayback();
+      else playReviewShadowing(weeklySentencesForWeek(reviewWeek, state.reviewSentenceOffset, reviewRangeWords(reviewWeek)), $("#shadowReviewSentences"), reviewWeek);
     });
     $("#refreshReviewSentences").addEventListener("click", () => {
       stopPlayback(false);
@@ -1829,6 +1868,7 @@
       ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${scopedWords.length} 个已学单词 · 英中逐段对应，中文保持英语语序`
       : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
+    $("#shadowReviewSentences").disabled = items.length === 0;
     $("#refreshReviewSentences").disabled = items.length < 2;
   }
 
