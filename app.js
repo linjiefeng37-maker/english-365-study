@@ -945,7 +945,9 @@
     const shadowReviewButton = $("#shadowReviewSentences");
     if (shadowReviewButton) {
       shadowReviewButton.classList.remove("active");
-      shadowReviewButton.textContent = "🎙 跟读练习";
+      shadowReviewButton.textContent = "🎙 循环跟读";
+      shadowReviewButton.setAttribute("aria-label", "循环跟读本周句子");
+      shadowReviewButton.setAttribute("aria-pressed", "false");
     }
     const listeningSentencesButton = $("#playListeningSentences");
     if (listeningSentencesButton) {
@@ -1324,7 +1326,7 @@
       offset: state.sentenceOffset,
       englishOnly: false,
     });
-    $("#sentenceSummary").textContent = `Day ${day} · ${dayTotal}/15 个词 · 英中逐段对应，中文保持英语语序`;
+    $("#sentenceSummary").textContent = `Day ${day} · ${dayTotal}/15 个词 · 尽量用遍本日单词，减少重复`;
     $("#playAllSentences").disabled = items.length === 0;
     $("#refreshSentences").disabled = items.length < 2;
   }
@@ -1333,14 +1335,93 @@
     return getWords(day).map((item, index) => ({ ...item, day, index }));
   }
 
+  function rotateDailyItems(items, offset = 0) {
+    if (!items.length) return [];
+    const start = ((Number(offset) || 0) % items.length + items.length) % items.length;
+    return [...items.slice(start), ...items.slice(0, start)];
+  }
+
+  function dailyWordListEnglish(words) {
+    const quoted = words.map((word) => `“${word.english}”`);
+    if (quoted.length <= 1) return quoted[0] || "";
+    if (quoted.length === 2) return `${quoted[0]} and ${quoted[1]}`;
+    return `${quoted.slice(0, -1).join(", ")}, and ${quoted.at(-1)}`;
+  }
+
+  function dailyWordListBreakdown(words) {
+    return words.map((word, index) => {
+      const isLast = index === words.length - 1;
+      const connector = index === 0 ? "" : isLast ? "and " : "";
+      const comma = !isLast && words.length > 2 ? "," : "";
+      const chineseConnector = index === 0 ? "" : "和";
+      return [
+        `${connector}“${word.english}”${comma}`,
+        `${chineseConnector}${shortMeaning(word.chinese) || word.chinese}`,
+      ];
+    });
+  }
+
+  function dailyPracticeSentence(words, variant = 0) {
+    const englishList = dailyWordListEnglish(words);
+    const chineseList = words.map((word) => shortMeaning(word.chinese) || word.chinese).join("、");
+    const wordParts = dailyWordListBreakdown(words);
+    const focus = words.map((word) => word.english);
+    const patterns = [
+      {
+        english: `Today I am learning ${englishList}.`,
+        chinese: `今天我正在学习${chineseList}。`,
+        breakdown: [["Today", "今天"], ["I", "我"], ["am learning", "正在学习"], ...wordParts],
+      },
+      {
+        english: `We can read ${englishList} aloud.`,
+        chinese: `我们可以大声读出${chineseList}。`,
+        breakdown: [["We", "我们"], ["can read", "可以朗读"], ...wordParts, ["aloud", "大声地"]],
+      },
+      {
+        english: `Please help me remember ${englishList}.`,
+        chinese: `请帮我记住${chineseList}。`,
+        breakdown: [["Please", "请"], ["help me", "帮助我"], ["remember", "记住"], ...wordParts],
+      },
+      {
+        english: `Let us practice ${englishList} together.`,
+        chinese: `让我们一起练习${chineseList}。`,
+        breakdown: [["Let us", "让我们"], ["practice", "练习"], ...wordParts, ["together", "一起"]],
+      },
+      {
+        english: `Now I can say ${englishList}.`,
+        chinese: `现在我会说${chineseList}。`,
+        breakdown: [["Now", "现在"], ["I", "我"], ["can say", "会说"], ...wordParts],
+      },
+      {
+        english: `You can use ${englishList} in a sentence.`,
+        chinese: `你可以在一个句子里使用${chineseList}。`,
+        breakdown: [["You", "你"], ["can use", "可以使用"], ...wordParts, ["in a sentence", "在一个句子里"]],
+      },
+      {
+        english: `${words.length === 1 ? "My new word is" : "My new words are"} ${englishList}.`,
+        chinese: `我的新单词是${chineseList}。`,
+        breakdown: [[words.length === 1 ? "My new word is" : "My new words are", "我的新单词是"], ...wordParts],
+      },
+      {
+        english: `I will review ${englishList} again.`,
+        chinese: `我会再次复习${chineseList}。`,
+        breakdown: [["I", "我"], ["will review", "会复习"], ...wordParts, ["again", "再次"]],
+      },
+    ];
+    const pattern = patterns[((Number(variant) || 0) % patterns.length + patterns.length) % patterns.length];
+    return sentence(pattern.english, pattern.chinese, focus, pattern.breakdown);
+  }
   function dailySentencesForDay(day, offset = 0) {
     const words = dailyWords(day);
     if (words.length < 2) return [];
-    const available = new Set(words.map((word) => word.english.toLowerCase()));
+    const rotatedWords = rotateDailyItems(words, offset);
+    const available = new Set(rotatedWords.map((word) => word.english.toLowerCase()));
     const source = [...(weeklySentenceLibrary[Math.ceil(day / 7)] || []), ...sentenceTemplates];
     const seen = new Set();
     const curated = source.reduce((items, item) => {
-      const focus = item.focus.filter((word) => available.has(word.toLowerCase())).slice(0, 5);
+      const focus = [...new Set(item.focus.map((word) => word.toLowerCase()))]
+        .filter((word) => available.has(word))
+        .slice(0, 5);
       const key = item.english.toLowerCase();
       if (focus.length >= 2 && !seen.has(key)) {
         seen.add(key);
@@ -1348,24 +1429,45 @@
       }
       return items;
     }, []);
-    const fallback = [];
-    for (let index = 0; index < words.length && fallback.length < 8; index += 2) {
-      const first = words[index % words.length];
-      const second = words[(index + 1) % words.length];
-      if (!first || !second || first.english.toLowerCase() === second.english.toLowerCase()) continue;
-      fallback.push(sentence(
-        `Today I am learning two words: ${first.english} and ${second.english}.`,
-        `我今天在学习两个单词：${first.english}（${shortMeaning(first.chinese) || first.chinese}）和 ${second.english}（${shortMeaning(second.chinese) || second.chinese}）。`,
-        [first.english, second.english],
-        [],
-      ));
-    }
-    const candidates = [...curated, ...fallback];
-    const amount = Math.min(8, candidates.length);
-    const start = candidates.length ? Number(offset || 0) % candidates.length : 0;
-    return Array.from({ length: amount }, (_, index) => candidates[(start + index) % candidates.length]);
-  }
 
+    const selected = [];
+    const covered = new Set();
+    const remainingCurated = rotateDailyItems(curated, offset);
+    while (selected.length < 3) {
+      let bestIndex = -1;
+      let bestCoverage = 1;
+      remainingCurated.forEach((item, index) => {
+        const focus = item.focus.map((word) => word.toLowerCase());
+        if (focus.some((word) => covered.has(word))) return;
+        if (focus.length > bestCoverage) {
+          bestIndex = index;
+          bestCoverage = focus.length;
+        }
+      });
+      if (bestIndex < 0) break;
+      const [best] = remainingCurated.splice(bestIndex, 1);
+      selected.push(best);
+      best.focus.forEach((word) => covered.add(word.toLowerCase()));
+    }
+
+    const unusedWords = rotatedWords.filter((word) => !covered.has(word.english.toLowerCase()));
+    const desiredTotal = Math.min(7, Math.max(1, Math.ceil(words.length / 2)));
+    const groupCount = Math.min(
+      Math.max(0, desiredTotal - selected.length),
+      Math.ceil(unusedWords.length / 2),
+    );
+    const fallback = [];
+    let cursor = 0;
+    for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
+      const groupsLeft = groupCount - groupIndex;
+      const wordsLeft = unusedWords.length - cursor;
+      const groupSize = Math.min(3, Math.ceil(wordsLeft / groupsLeft));
+      const group = unusedWords.slice(cursor, cursor + groupSize);
+      cursor += groupSize;
+      if (group.length) fallback.push(dailyPracticeSentence(group, Number(offset || 0) + selected.length + groupIndex));
+    }
+    return [...selected, ...fallback];
+  }
   function dailyFocusWords(item, day) {
     const available = new Map(dailyWords(day).map((word) => [word.english.toLowerCase(), word]));
     return item.focus.map((word) => available.get(word.toLowerCase())).filter(Boolean).slice(0, 5);
@@ -1651,24 +1753,24 @@
     const { list, label } = weeklySentenceElements("review");
     button.classList.add("active");
     button.textContent = "■ 停止跟读";
+    button.setAttribute("aria-label", "停止循环跟读");
+    button.setAttribute("aria-pressed", "true");
     markActivity(weekRange(week).start);
 
-    for (const [index, item] of items.entries()) {
-      if (token !== playbackToken) break;
-      const card = $$(".sentence-card", list)[index];
-      showWeeklySentencePlaying(item, card, "review", week, false, "先听英文句子");
-      await speak(item.english, "en-US", token, listeningRate());
-      if (token !== playbackToken) break;
-      label.textContent = "现在请跟读";
-      await wait(shadowingPauseMs(item.english), token);
-    }
-
-    if (token === playbackToken) {
-      stopPlayback(false);
-      showToast("本组跟读完成");
+    let round = 1;
+    while (token === playbackToken) {
+      for (const [index, item] of items.entries()) {
+        if (token !== playbackToken) break;
+        const card = $$(".sentence-card", list)[index];
+        showWeeklySentencePlaying(item, card, "review", week, false, `第 ${round} 轮 · 先听英文句子`);
+        await speak(item.english, "en-US", token, listeningRate());
+        if (token !== playbackToken) break;
+        label.textContent = `第 ${round} 轮 · 现在请跟读`;
+        await wait(shadowingPauseMs(item.english), token);
+      }
+      round += 1;
     }
   }
-
   function setReviewMode(mode) {
     if (!["words", "sentences"].includes(mode)) return;
     stopPlayback(false);
