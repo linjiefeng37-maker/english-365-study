@@ -930,7 +930,7 @@
     const allSentencesButton = $("#playAllSentences");
     if (allSentencesButton) {
       allSentencesButton.classList.remove("active");
-      allSentencesButton.textContent = "▶ 连续播放本日句子";
+      allSentencesButton.textContent = "▶ 播放本日句子一遍";
     }
     const reviewButton = $("#playReview");
     if (reviewButton) {
@@ -1561,17 +1561,17 @@
     button.classList.add("active");
     button.textContent = englishOnly ? "■ Stop" : "■ 停止播放";
     markActivity(day);
-    while (token === playbackToken) {
-      for (const [index, item] of items.entries()) {
-        if (token !== playbackToken) break;
-        showDailySentencePlaying(item, $$(".sentence-card", list)[index], context, day, englishOnly, englishOnly ? "Now playing" : "正在连续播放本日句子");
-        await speakDailySentence(item, token, englishOnly, day);
-        await wait(650 / speechRate(), token);
-      }
-      if (token === playbackToken) await wait(950 / speechRate(), token);
+    for (const [index, item] of items.entries()) {
+      if (token !== playbackToken) break;
+      showDailySentencePlaying(item, $$(".sentence-card", list)[index], context, day, englishOnly, englishOnly ? "Now playing" : "正在播放本日句子");
+      await speakDailySentence(item, token, englishOnly, day);
+      if (token === playbackToken && index < items.length - 1) await wait(650 / speechRate(), token);
+    }
+    if (token === playbackToken) {
+      stopPlayback(false);
+      showToast(englishOnly ? "Finished" : "本日句子已播放一遍");
     }
   }
-
   function weeklyFocusWords(item, week) {
     const available = new Map(wordsForWeek(week).map((word) => [word.english.toLowerCase(), word]));
     return item.focus
