@@ -181,6 +181,34 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .voice-setting select { max-width: 205px; }
 
 .word-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.word-grid.word-grid--grouped { display: block; }
+.word-group + .word-group { margin-top: 24px; }
+.word-group { --group-color: #276d51; --group-soft: #edf7ee; padding: 18px; border: 1px solid #d5e8d7; border-radius: 24px; background: var(--group-soft); }
+.word-group-2 { --group-color: #236cc3; --group-soft: #edf6ff; border-color: #d5e6f8; }
+.word-group-3 { --group-color: #7435c5; --group-soft: #f5efff; border-color: #e5d9f7; }
+.word-group-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 16px;
+}
+.word-group-summary { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.word-group-number { width: 39px; height: 39px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; color: white; background: var(--group-color); font-size: 1.18rem; font-weight: 900; }
+.word-group-heading h2 { margin: 0; padding: 8px 11px; border-radius: 10px; color: white; background: var(--group-color); font-size: 1rem; line-height: 1.2; }
+.word-group-count { flex: 0 0 auto; color: var(--group-color); font-size: .86rem; font-weight: 850; }
+.word-group-heading p { margin: 0 0 0 8px; color: #55645a; font-size: .88rem; }
+.word-group-memory { display: flex; align-items: center; justify-content: flex-end; gap: 9px; color: var(--group-color); text-align: left; }
+.word-group-icon { font-size: 1.45rem; font-weight: 900; }
+.word-group-memory strong, .word-group-memory small { display: block; }
+.word-group-memory strong { font-size: .98rem; }
+.word-group-memory small { margin-top: 2px; color: #6f7a72; font-size: .75rem; }
+.word-group-grid { display: grid; grid-template-columns: repeat(var(--group-columns, 3), minmax(0, 1fr)); gap: 12px; }
+.word-group-1 { --group-columns: 5; }
+.word-group-2 { --group-columns: 4; }
+.word-group-3 { --group-columns: 6; }
+.word-grid--grouped .word-card { min-height: 178px; padding: 14px; display: flex; flex-direction: column; }
+.word-grid--grouped .word-card-top { gap: 7px; }
+.word-grid--grouped .word-audio-actions { gap: 4px; }
+.word-grid--grouped .speak-word, .word-grid--grouped .loop-word { min-width: 34px; width: 34px; height: 34px; padding: 0; }
+.word-grid--grouped .loop-word span { display: none; }
+.word-grid--grouped .word-actions { margin-top: auto; }
 .word-card {
   position: relative; min-height: 150px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-lg);
   background: var(--paper); box-shadow: 0 8px 25px rgba(47,69,54,.04); transition: border-color .18s, transform .18s, box-shadow .18s;
@@ -189,10 +217,16 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .word-card:hover { transform: translateY(-2px); border-color: #bcd0ba; box-shadow: var(--shadow); }
 .word-card.current { border-color: var(--focus); box-shadow: 0 0 0 4px var(--focus-soft), var(--shadow); transform: translateY(-2px); }
 .word-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.word-card-meta { display: flex; align-items: center; gap: 7px; min-height: 24px; }
 .word-number { display: inline-flex; color: #87948b; font-size: .78rem; font-weight: 800; }
+.word-category { display: inline-flex; padding: 3px 8px; border-radius: 999px; color: #276d51; background: #e3f1e6; font-size: .72rem; font-weight: 850; }
+.word-group-2 .word-category { color: #236cc3; background: #e2effd; }
+.word-group-3 .word-category { color: #7435c5; background: #eadffc; }
 .word-title { margin: 6px 0 0; font-size: 1.65rem; line-height: 1.15; letter-spacing: -.02em; }
 .word-phonetic { display: block; margin-top: 3px; color: var(--muted); font-size: .9rem; }
-.word-meaning { display: block; margin: 10px 0 13px; color: #47554b; }
+.word-meaning { display: flex; align-items: baseline; gap: 7px; margin: 10px 0 13px; color: #47554b; }
+.word-meaning strong { font-size: 1.03rem; font-weight: 750; }
+.word-meaning-label { flex: 0 0 auto; color: #78867c; font-size: .76rem; font-weight: 800; }
 .word-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .word-audio-actions { display: flex; gap: 6px; align-items: center; }
 .speak-word, .loop-word { min-width: 40px; height: 40px; border: 0; border-radius: 12px; color: var(--indigo); background: var(--indigo-soft); font-size: 1.05rem; }
@@ -362,7 +396,9 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .player-card { grid-template-columns: 1fr; }
   .player-controls { justify-content: flex-start; }
-  .word-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .word-grid, .word-group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .word-group-heading { align-items: flex-start; flex-direction: column; }
+  .word-group-memory { justify-content: flex-start; }
   .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dictation-layout { grid-template-columns: 1fr; }
 }
@@ -392,7 +428,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   .speech-setting { grid-column: 1 / -1; display: grid; grid-template-columns: 66px minmax(0, 1fr); }
   .speech-setting select, .voice-setting select { width: 100%; max-width: none; }
   .control-btn span, .play-btn span { display: none; }
-  .word-grid, .review-grid { grid-template-columns: 1fr; }
+  .word-grid, .word-group-grid, .review-grid { grid-template-columns: 1fr; }
+  .word-group + .word-group { margin-top: 20px; }
+  .word-group { padding: 14px; border-radius: 20px; }
+  .word-group-summary { align-items: flex-start; flex-wrap: wrap; }
+  .word-group-heading p { flex-basis: 100%; margin: 0; font-size: .84rem; }
+  .word-group-memory small { font-size: .72rem; }
   .word-card { min-height: 142px; }
   .dictation-card { min-height: 430px; padding: 20px 15px; }
   .dictation-input-row { grid-template-columns: 50px minmax(0, 1fr); }
