@@ -278,7 +278,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=allowed-vocabulary-29", { updateViaCache: "none" })
+          .register("./sw.js?v=word-blocks-30", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1291,17 +1291,19 @@
   }
 
   function sentenceOrderSegments(item, scopeWords = []) {
-    if (Array.isArray(item.breakdown) && item.breakdown.length) {
-      return item.breakdown
-        .filter((part) => Array.isArray(part) && part[0] && part[1])
-        .map(([english, chinese]) => ({ english: String(english), chinese: String(chinese) }));
-    }
     const tokens = String(item.english || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*|\d+(?:\.\d+)?/g) || [];
     const meanings = sentenceMeaningMap(scopeWords);
     return tokens.map((english, index) => ({
       english,
       chinese: sentenceTokenMeaning(english, index, tokens, meanings),
     }));
+  }
+
+  function sentenceSpeechSegments(item, displaySegments) {
+    if (!Array.isArray(item.breakdown) || !item.breakdown.length) return displaySegments;
+    return item.breakdown
+      .filter((part) => Array.isArray(part) && part[0] && part[1])
+      .map(([english, chinese]) => ({ english: String(english), chinese: String(chinese) }));
   }
 
   function sentenceFocusSet(focusWords = []) {
@@ -1317,6 +1319,7 @@
 
   function sentenceOrderPresentation(item, scopeWords, focusWords) {
     const segments = sentenceOrderSegments(item, scopeWords);
+    const speechSegments = sentenceSpeechSegments(item, segments);
     const focus = sentenceFocusSet(focusWords);
     const englishHTML = segments
       .map((part) => highlightSentenceOrderPart(part.english, focus))
@@ -1328,7 +1331,7 @@
       return `<span class="sentence-order-pair"><b class="sentence-order-en">${highlightSentenceOrderPart(part.english, focus)}${divider}</b><span class="sentence-order-zh" lang="zh-CN">${escapeHTML(part.chinese)}${divider}</span></span>`;
     }).join("");
     const alignedHTML = `<span class="sentence-order-grid" aria-label="${escapeHTML(alignmentLabel)}">${pairs}</span>`;
-    const alignedChinese = segments.map((part) => part.chinese.replace(/\s*\/.*$/, "")).join("");
+    const alignedChinese = speechSegments.map((part) => part.chinese.replace(/\s*\/.*$/, "")).join("");
     const speechChinese = alignedChinese
       .replace(/[，、；：｜]/g, "")
       .replace(/\s+/g, "")
