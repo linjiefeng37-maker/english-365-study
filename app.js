@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=natural-short-sentences-35", { updateViaCache: "none" })
+          .register("./sw.js?v=natural-short-sentences-36", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1409,6 +1409,7 @@
     "on the ground": "在地上",
     "on time": "准时",
     "pay now": "现在付款",
+    "sat down": "坐下",
     "sit down": "坐下",
     "take your time": "慢慢来",
     "the bathroom floor": "浴室地板",
@@ -1431,6 +1432,8 @@
     if (key === "off" && ["is", "are", "was", "were"].includes(previous)) return "关着";
     if (key === "light" && tokens.includes("off")) return "灯";
     if (key === "fair" && tokens.includes("hair")) return "浅色的";
+    if (key === "french" && ["read", "speak"].includes(previous)) return "法语";
+    if (key === "cook" && ["a", "the", "our", "my", "your", "his", "her", "their"].includes(previous)) return "厨师";
     if (key === "over" && ["is", "was"].includes(previous)) return "结束了";
     if (key === "to") {
       if (sentenceInfinitiveVerbs.has(next)) return ["want", "like", "need"].includes(previous) ? "去" : "为了";
@@ -2250,11 +2253,10 @@
     11: [
       dailyLine("The bear came into the room.", ["bear", "came", "room"]),
       dailyLine("Come near me.", ["near"]),
-      dailyLine("Dear friend, I can help.", ["dear"]),
+      dailyLine("My dear friend can help.", ["dear"]),
       dailyLine("I can see with my eyes.", ["eyes"]),
       dailyLine("This is my ear.", ["ear"]),
       dailyLine("Where is home?", ["where"]),
-      dailyLine("I know these states.", ["states"]),
       dailyLine("You must look under it.", ["must", "under"]),
       dailyLine("This year is good.", ["year"]),
       dailyLine("I still want more.", ["still"]),
@@ -2288,7 +2290,7 @@
       dailyLine("Look up and down.", ["up", "down"]),
       dailyLine("I can hear you.", ["hear"]),
       dailyLine("Come here now.", ["here"]),
-      dailyLine("Dear friend, I can help.", ["dear"]),
+      dailyLine("I can help a dear friend.", ["dear"]),
       dailyLine("I feel fear.", ["fear"]),
       dailyLine("This year is good.", ["year"]),
     ],
@@ -2684,10 +2686,10 @@
       dailyLine("Look back now.", ["back"]),
       dailyLine("My body is strong.", ["body"]),
       dailyLine("I feel good, not bad.", ["good", "bad"]),
-      dailyLine("You can sit here.", ["sit", "here"]),
+      dailyLine("You can sit.", ["sit"]),
       dailyLine("Stand near me.", ["stand", "near"]),
       dailyLine("I can hear you.", ["hear"]),
-      dailyLine("Dear friend, I can help.", ["dear"]),
+      dailyLine("My dear friend is here.", ["dear", "here"]),
       dailyLine("It is a new year.", ["year"]),
       dailyLine("I feel fear.", ["fear"]),
     ],
