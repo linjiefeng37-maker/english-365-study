@@ -1,4 +1,4 @@
-/* Day 4-50: imported from the user's latest desktop English 365 workbook. */
+/* Day 4-10 preserved; Day 11-50 imported from the user's latest desktop English 365 workbook. */
 (function () {
   const groups = [
   [
@@ -587,14 +587,14 @@
       "phonetic": "/stil/"
     },
     {
-      "english": "being",
-      "chinese": "存在；性质；生命",
-      "phonetic": "/'bi:iŋ/"
+      "english": "ear",
+      "chinese": "耳朵",
+      "phonetic": "/ɪr/"
     },
     {
-      "english": "hear",
-      "chinese": "听到；倾听；听说",
-      "phonetic": "/hiә/"
+      "english": "bear",
+      "chinese": "熊；承受",
+      "phonetic": "/ber/"
     },
     {
       "english": "near",
@@ -664,11 +664,6 @@
       "phonetic": "/bi'gæn/"
     },
     {
-      "english": "great",
-      "chinese": "大的；非常的；主要的",
-      "phonetic": "/greit/"
-    },
-    {
       "english": "old",
       "chinese": "老的；旧的；从前的",
       "phonetic": "/әuld/"
@@ -692,6 +687,11 @@
       "english": "gold",
       "chinese": "金；金色",
       "phonetic": "/ɡoʊld/"
+    },
+    {
+      "english": "sold",
+      "chinese": "卖了；出售（sell 的过去式和过去分词）",
+      "phonetic": "/soʊld/"
     }
   ],
   [
@@ -741,11 +741,6 @@
       "phonetic": "/pɑ:t/"
     },
     {
-      "english": "government",
-      "chinese": "政府；内阁",
-      "phonetic": "/'gʌvәnmәnt/"
-    },
-    {
       "english": "sound",
       "chinese": "声音；语音；吵闹",
       "phonetic": "/saund/"
@@ -769,6 +764,11 @@
       "english": "ground",
       "chinese": "土地；战场；场地",
       "phonetic": "/graund/"
+    },
+    {
+      "english": "bound",
+      "chinese": "跳；界限；被束缚的",
+      "phonetic": "/baʊnd/"
     }
   ],
   [
@@ -818,11 +818,6 @@
       "phonetic": "/bi'twi:n/"
     },
     {
-      "english": "every",
-      "chinese": "每一；所有的",
-      "phonetic": "/'evri/"
-    },
-    {
       "english": "down",
       "chinese": "向下；情绪低落的",
       "phonetic": "/daun/"
@@ -846,6 +841,11 @@
       "english": "clown",
       "chinese": "小丑",
       "phonetic": "/klaʊn/"
+    },
+    {
+      "english": "gown",
+      "chinese": "长袍；礼服",
+      "phonetic": "/ɡaʊn/"
     }
   ],
   [
@@ -895,11 +895,6 @@
       "phonetic": "/dɒn/"
     },
     {
-      "english": "skin",
-      "chinese": "皮肤；皮；剥皮",
-      "phonetic": "/skin/"
-    },
-    {
       "english": "air",
       "chinese": "空气；旋律；态度",
       "phonetic": "/єә/"
@@ -923,6 +918,11 @@
       "english": "chair",
       "chinese": "椅子",
       "phonetic": "/tʃer/"
+    },
+    {
+      "english": "stair",
+      "chinese": "一级楼梯；楼梯",
+      "phonetic": "/ster/"
     }
   ],
   [
@@ -972,11 +972,6 @@
       "phonetic": "/'fɑ:ðә/"
     },
     {
-      "english": "both",
-      "chinese": "两者的；两者都；两者",
-      "phonetic": "/bәuθ/"
-    },
-    {
       "english": "late",
       "chinese": "迟的；晚的；已故的",
       "phonetic": "/leit/"
@@ -1000,6 +995,11 @@
       "english": "state",
       "chinese": "状态；州；陈述",
       "phonetic": "/steit/"
+    },
+    {
+      "english": "gate",
+      "chinese": "大门；入口",
+      "phonetic": "/ɡeɪt/"
     }
   ],
   [
@@ -1049,11 +1049,6 @@
       "phonetic": "/'lukiŋ/"
     },
     {
-      "english": "whom",
-      "chinese": "谁",
-      "phonetic": "/hu:m/"
-    },
-    {
       "english": "same",
       "chinese": "相同的；同样",
       "phonetic": "/seim/"
@@ -1077,6 +1072,11 @@
       "english": "blame",
       "chinese": "责怪；责任",
       "phonetic": "/bleɪm/"
+    },
+    {
+      "english": "frame",
+      "chinese": "框架；给……镶框",
+      "phonetic": "/freɪm/"
     }
   ],
   [
@@ -1126,11 +1126,6 @@
       "phonetic": "/deiz/"
     },
     {
-      "english": "among",
-      "chinese": "在...之中",
-      "phonetic": "/ә'mʌŋ/"
-    },
-    {
       "english": "end",
       "chinese": "结束；终点；目标",
       "phonetic": "/end/"
@@ -1154,6 +1149,11 @@
       "english": "weekend",
       "chinese": "周末",
       "phonetic": "/ˈwiːkend/"
+    },
+    {
+      "english": "bend",
+      "chinese": "弯曲；转弯",
+      "phonetic": "/bend/"
     }
   ],
   [
@@ -1203,11 +1203,6 @@
       "phonetic": "/pә'ziʃәn/"
     },
     {
-      "english": "however",
-      "chinese": "然而；无论如何；究竟怎样",
-      "phonetic": "/hau'evә/"
-    },
-    {
       "english": "and",
       "chinese": "和；而且",
       "phonetic": "/ænd/"
@@ -1231,6 +1226,11 @@
       "english": "understand",
       "chinese": "理解；了解；领会",
       "phonetic": "/.ʌndә'stænd/"
+    },
+    {
+      "english": "band",
+      "chinese": "乐队；带子",
+      "phonetic": "/bænd/"
     }
   ],
   [
@@ -1280,11 +1280,6 @@
       "phonetic": "/fɑ:/"
     },
     {
-      "english": "brought",
-      "chinese": "带来（bring 的过去式）",
-      "phonetic": "/brɒ:t/"
-    },
-    {
       "english": "in",
       "chinese": "在……里面；在……期间",
       "phonetic": "/in/"
@@ -1308,6 +1303,11 @@
       "english": "thin",
       "chinese": "薄的；细的；瘦的",
       "phonetic": "/θin/"
+    },
+    {
+      "english": "pin",
+      "chinese": "别针；固定",
+      "phonetic": "/pɪn/"
     }
   ],
   [
@@ -1357,11 +1357,6 @@
       "phonetic": "/'gәuiŋ/"
     },
     {
-      "english": "evidently",
-      "chinese": "明显地；根据现有证据来看",
-      "phonetic": "/'evidәntli/"
-    },
-    {
       "english": "it",
       "chinese": "它；这件事",
       "phonetic": "/it/"
@@ -1385,6 +1380,11 @@
       "english": "bit",
       "chinese": "一点；小块",
       "phonetic": "/bɪt/"
+    },
+    {
+      "english": "quit",
+      "chinese": "离开；停止",
+      "phonetic": "/kwɪt/"
     }
   ],
   [
@@ -1434,11 +1434,6 @@
       "phonetic": "/frʌnt/"
     },
     {
-      "english": "does",
-      "chinese": "做（do 的第三人称单数）",
-      "phonetic": "/dʌz; dәz/"
-    },
-    {
       "english": "top",
       "chinese": "顶部",
       "phonetic": "/tɑːp/"
@@ -1462,6 +1457,11 @@
       "english": "pop",
       "chinese": "突然出现；砰的一声",
       "phonetic": "/pɑːp/"
+    },
+    {
+      "english": "hop",
+      "chinese": "单脚跳；跳跃",
+      "phonetic": "/hɑːp/"
     }
   ],
   [
@@ -1511,11 +1511,6 @@
       "phonetic": "/'leitә/"
     },
     {
-      "english": "toward",
-      "chinese": "向；对于；为了",
-      "phonetic": "/tә'wɒ:d/"
-    },
-    {
       "english": "see",
       "chinese": "看见",
       "phonetic": "/siː/"
@@ -1539,6 +1534,11 @@
       "english": "agree",
       "chinese": "同意",
       "phonetic": "/əˈɡriː/"
+    },
+    {
+      "english": "bee",
+      "chinese": "蜜蜂",
+      "phonetic": "/biː/"
     }
   ],
   [
@@ -1588,11 +1588,6 @@
       "phonetic": "/ik'spreʃәn/"
     },
     {
-      "english": "things",
-      "chinese": "事情；东西",
-      "phonetic": ""
-    },
-    {
       "english": "train",
       "chinese": "火车；训练",
       "phonetic": "/treɪn/"
@@ -1616,6 +1611,11 @@
       "english": "brain",
       "chinese": "大脑",
       "phonetic": "/breɪn/"
+    },
+    {
+      "english": "chain",
+      "chinese": "链条；连锁",
+      "phonetic": "/tʃeɪn/"
     }
   ],
   [
@@ -1665,11 +1665,6 @@
       "phonetic": "/ðәm'selvz/"
     },
     {
-      "english": "wound",
-      "chinese": "创伤；伤口；伤疤",
-      "phonetic": "/wu:nd/"
-    },
-    {
       "english": "thing",
       "chinese": "事物；东西；物",
       "phonetic": "/θiŋ/"
@@ -1693,6 +1688,11 @@
       "english": "spring",
       "chinese": "春天；弹簧",
       "phonetic": "/sprɪŋ/"
+    },
+    {
+      "english": "king",
+      "chinese": "国王；君主；使...成为君主",
+      "phonetic": "/kiŋ/"
     }
   ],
   [
@@ -1742,11 +1742,6 @@
       "phonetic": "/niә/"
     },
     {
-      "english": "tissues",
-      "chinese": "组织；纸巾",
-      "phonetic": ""
-    },
-    {
       "english": "think",
       "chinese": "想；认为",
       "phonetic": "/θɪŋk/"
@@ -1770,6 +1765,11 @@
       "english": "sink",
       "chinese": "下沉；水槽",
       "phonetic": "/sɪŋk/"
+    },
+    {
+      "english": "wink",
+      "chinese": "眨眼",
+      "phonetic": "/wɪŋk/"
     }
   ],
   [
@@ -1819,11 +1819,6 @@
       "phonetic": "/ig'zæmpl/"
     },
     {
-      "english": "west",
-      "chinese": "西方；西部；西方的",
-      "phonetic": "/west/"
-    },
-    {
       "english": "back",
       "chinese": "后面；返回；背部",
       "phonetic": "/bæk/"
@@ -1847,6 +1842,11 @@
       "english": "lack",
       "chinese": "缺少；缺乏",
       "phonetic": "/læk/"
+    },
+    {
+      "english": "snack",
+      "chinese": "小吃；零食",
+      "phonetic": "/snæk/"
     }
   ],
   [
@@ -1896,11 +1896,6 @@
       "phonetic": "/lait/"
     },
     {
-      "english": "cannot",
-      "chinese": "不能",
-      "phonetic": "/'kænɒt/"
-    },
-    {
       "english": "pick",
       "chinese": "选择；摘",
       "phonetic": "/pɪk/"
@@ -1924,6 +1919,11 @@
       "english": "kick",
       "chinese": "踢",
       "phonetic": "/kɪk/"
+    },
+    {
+      "english": "thick",
+      "chinese": "厚的；浓的",
+      "phonetic": "/θɪk/"
     }
   ],
   [
@@ -1978,29 +1978,29 @@
       "phonetic": "/best/"
     },
     {
-      "english": "nice",
-      "chinese": "好的；友好的",
-      "phonetic": "/naɪs/"
+      "english": "rest",
+      "chinese": "休息；睡眠；安息",
+      "phonetic": "/rest/"
     },
     {
-      "english": "price",
-      "chinese": "价格",
-      "phonetic": "/praɪs/"
+      "english": "test",
+      "chinese": "测试；考试",
+      "phonetic": "/test/"
     },
     {
-      "english": "rice",
-      "chinese": "米饭；大米",
-      "phonetic": "/raɪs/"
+      "english": "west",
+      "chinese": "西方；西部；西方的",
+      "phonetic": "/west/"
     },
     {
-      "english": "twice",
-      "chinese": "两次",
-      "phonetic": "/twaɪs/"
+      "english": "chest",
+      "chinese": "胸部；箱子",
+      "phonetic": "/tʃest/"
     },
     {
-      "english": "ice",
-      "chinese": "冰",
-      "phonetic": "/aɪs/"
+      "english": "nest",
+      "chinese": "巢；窝",
+      "phonetic": "/nest/"
     }
   ],
   [
@@ -2050,34 +2050,34 @@
       "phonetic": "/kәuld/"
     },
     {
-      "english": "heart",
-      "chinese": "心；心脏；中心",
-      "phonetic": "/hɑ:t/"
+      "english": "ice",
+      "chinese": "冰",
+      "phonetic": "/aɪs/"
     },
     {
-      "english": "side",
-      "chinese": "旁边；侧；方面",
-      "phonetic": "/said/"
+      "english": "nice",
+      "chinese": "好的；友好的",
+      "phonetic": "/naɪs/"
     },
     {
-      "english": "ride",
-      "chinese": "骑；乘坐",
-      "phonetic": "/raɪd/"
+      "english": "price",
+      "chinese": "价格",
+      "phonetic": "/praɪs/"
     },
     {
-      "english": "hide",
-      "chinese": "躲藏；隐藏",
-      "phonetic": "/haɪd/"
+      "english": "rice",
+      "chinese": "米饭；大米",
+      "phonetic": "/raɪs/"
     },
     {
-      "english": "wide",
-      "chinese": "宽的",
-      "phonetic": "/waɪd/"
+      "english": "twice",
+      "chinese": "两次",
+      "phonetic": "/twaɪs/"
     },
     {
-      "english": "inside",
-      "chinese": "在里面；内部",
-      "phonetic": "/ˌɪnˈsaɪd/"
+      "english": "slice",
+      "chinese": "薄片；切成片",
+      "phonetic": "/slaɪs/"
     }
   ],
   [
@@ -2127,34 +2127,34 @@
       "phonetic": "/wiʃ/"
     },
     {
-      "english": "conditions",
-      "chinese": "情况；条件",
-      "phonetic": ""
+      "english": "side",
+      "chinese": "旁边；侧；方面",
+      "phonetic": "/said/"
     },
     {
-      "english": "more",
-      "chinese": "更多；更",
-      "phonetic": "/mɒ:/"
+      "english": "ride",
+      "chinese": "骑；乘坐",
+      "phonetic": "/raɪd/"
     },
     {
-      "english": "store",
-      "chinese": "商店；储存",
-      "phonetic": "/stɔːr/"
+      "english": "hide",
+      "chinese": "躲藏；隐藏",
+      "phonetic": "/haɪd/"
     },
     {
-      "english": "before",
-      "chinese": "在……之前；以前",
-      "phonetic": "/bi'fɒ:/"
+      "english": "wide",
+      "chinese": "宽的",
+      "phonetic": "/waɪd/"
     },
     {
-      "english": "floor",
-      "chinese": "地板；楼层",
-      "phonetic": "/flɔːr/"
+      "english": "inside",
+      "chinese": "在里面；内部",
+      "phonetic": "/ˌɪnˈsaɪd/"
     },
     {
-      "english": "four",
-      "chinese": "四；四个；四冲程循环",
-      "phonetic": "/fɒ:/"
+      "english": "outside",
+      "chinese": "外面；在外面",
+      "phonetic": "/ˌaʊtˈsaɪd/"
     }
   ],
   [
@@ -2204,34 +2204,34 @@
       "phonetic": "/'preʃә/"
     },
     {
-      "english": "hair",
-      "chinese": "头发；毛发；些微",
-      "phonetic": "/hєә/"
+      "english": "more",
+      "chinese": "更多；更",
+      "phonetic": "/mɒ:/"
     },
     {
-      "english": "know",
-      "chinese": "知道；认识",
-      "phonetic": "/noʊ/"
+      "english": "store",
+      "chinese": "商店；储存",
+      "phonetic": "/stɔːr/"
     },
     {
-      "english": "show",
-      "chinese": "显示；表现；展览",
-      "phonetic": "/ʃәu/"
+      "english": "before",
+      "chinese": "在……之前；以前",
+      "phonetic": "/bi'fɒ:/"
     },
     {
-      "english": "grow",
-      "chinese": "生长；成长",
-      "phonetic": "/ɡroʊ/"
+      "english": "floor",
+      "chinese": "地板；楼层",
+      "phonetic": "/flɔːr/"
     },
     {
-      "english": "slow",
-      "chinese": "慢的；慢慢地",
-      "phonetic": "/sloʊ/"
+      "english": "door",
+      "chinese": "门",
+      "phonetic": "/dɒ:/"
     },
     {
-      "english": "low",
-      "chinese": "低的；低声",
-      "phonetic": "/loʊ/"
+      "english": "shore",
+      "chinese": "岸；海岸",
+      "phonetic": "/ʃɔːr/"
     }
   ],
   [
@@ -2281,34 +2281,34 @@
       "phonetic": "/nɒ:θ/"
     },
     {
-      "english": "peace",
-      "chinese": "和平；和约；治安",
-      "phonetic": "/pi:s/"
+      "english": "know",
+      "chinese": "知道；认识",
+      "phonetic": "/noʊ/"
     },
     {
-      "english": "part",
-      "chinese": "部分；角色；离开",
-      "phonetic": "/pɑ:t/"
+      "english": "show",
+      "chinese": "显示；表现；展览",
+      "phonetic": "/ʃәu/"
     },
     {
-      "english": "start",
-      "chinese": "开始",
-      "phonetic": "/stɑːrt/"
+      "english": "grow",
+      "chinese": "生长；成长",
+      "phonetic": "/ɡroʊ/"
     },
     {
-      "english": "heart",
-      "chinese": "心；心脏；中心",
-      "phonetic": "/hɑ:t/"
+      "english": "slow",
+      "chinese": "慢的；慢慢地",
+      "phonetic": "/sloʊ/"
     },
     {
-      "english": "smart",
-      "chinese": "聪明的；时髦的",
-      "phonetic": "/smɑːrt/"
+      "english": "low",
+      "chinese": "低的；低声",
+      "phonetic": "/loʊ/"
     },
     {
-      "english": "art",
-      "chinese": "艺术",
-      "phonetic": "/ɑːrt/"
+      "english": "blow",
+      "chinese": "吹；打击",
+      "phonetic": "/bloʊ/"
     }
   ],
   [
@@ -2358,34 +2358,34 @@
       "phonetic": "/'sә:vis/"
     },
     {
-      "english": "across",
-      "chinese": "越过；穿过；与...相交叉",
-      "phonetic": "/ә'krɒs/"
+      "english": "part",
+      "chinese": "部分；角色；离开",
+      "phonetic": "/pɑ:t/"
     },
     {
-      "english": "phone",
-      "chinese": "电话；手机",
-      "phonetic": "/fәun/"
+      "english": "start",
+      "chinese": "开始",
+      "phonetic": "/stɑːrt/"
     },
     {
-      "english": "alone",
-      "chinese": "孤独的；单独的；独自的",
-      "phonetic": "/ә'lәun/"
+      "english": "heart",
+      "chinese": "心；心脏；中心",
+      "phonetic": "/hɑ:t/"
     },
     {
-      "english": "tone",
-      "chinese": "音调；音质；语调",
-      "phonetic": "/tәun/"
+      "english": "smart",
+      "chinese": "聪明的；时髦的",
+      "phonetic": "/smɑːrt/"
     },
     {
-      "english": "stone",
-      "chinese": "石头",
-      "phonetic": "/stoʊn/"
+      "english": "art",
+      "chinese": "艺术",
+      "phonetic": "/ɑːrt/"
     },
     {
-      "english": "zone",
-      "chinese": "区域",
-      "phonetic": "/zoʊn/"
+      "english": "chart",
+      "chinese": "图表",
+      "phonetic": "/tʃɑːrt/"
     }
   ],
   [
@@ -2435,34 +2435,34 @@
       "phonetic": "/ә'pinjәn/"
     },
     {
-      "english": "self",
-      "chinese": "自己；自我；本性",
-      "phonetic": "/self/"
+      "english": "phone",
+      "chinese": "电话；手机",
+      "phonetic": "/fәun/"
     },
     {
-      "english": "night",
-      "chinese": "夜晚；晚上",
-      "phonetic": "/nait/"
+      "english": "alone",
+      "chinese": "孤独的；单独的；独自的",
+      "phonetic": "/ә'lәun/"
     },
     {
-      "english": "light",
-      "chinese": "光；光亮；灯",
-      "phonetic": "/lait/"
+      "english": "tone",
+      "chinese": "音调；音质；语调",
+      "phonetic": "/tәun/"
     },
     {
-      "english": "right",
-      "chinese": "正确的；右边；权利",
-      "phonetic": "/rait/"
+      "english": "stone",
+      "chinese": "石头",
+      "phonetic": "/stoʊn/"
     },
     {
-      "english": "might",
-      "chinese": "可能；力量",
-      "phonetic": "/mait/"
+      "english": "zone",
+      "chinese": "区域",
+      "phonetic": "/zoʊn/"
     },
     {
-      "english": "fight",
-      "chinese": "打架；战斗",
-      "phonetic": "/faɪt/"
+      "english": "bone",
+      "chinese": "骨头；骨；骨制品",
+      "phonetic": "/bәun/"
     }
   ],
   [
@@ -2512,34 +2512,34 @@
       "phonetic": "/.ɒpә'reiʃәn/"
     },
     {
-      "english": "show",
-      "chinese": "显示；表现；展览",
-      "phonetic": "/ʃәu/"
+      "english": "night",
+      "chinese": "夜晚；晚上",
+      "phonetic": "/nait/"
     },
     {
-      "english": "day",
-      "chinese": "一天；白天",
-      "phonetic": "/dei/"
+      "english": "light",
+      "chinese": "光；光亮；灯",
+      "phonetic": "/lait/"
     },
     {
-      "english": "way",
-      "chinese": "方式；道路；方向",
-      "phonetic": "/wei/"
+      "english": "right",
+      "chinese": "正确的；右边；权利",
+      "phonetic": "/rait/"
     },
     {
-      "english": "say",
-      "chinese": "说",
-      "phonetic": "/seɪ/"
+      "english": "might",
+      "chinese": "可能；力量",
+      "phonetic": "/mait/"
     },
     {
-      "english": "may",
-      "chinese": "可能；可以；五月",
-      "phonetic": "/mei/"
+      "english": "fight",
+      "chinese": "打架；战斗",
+      "phonetic": "/faɪt/"
     },
     {
-      "english": "pay",
-      "chinese": "付款；工资",
-      "phonetic": "/peɪ/"
+      "english": "bright",
+      "chinese": "明亮的；聪明的",
+      "phonetic": "/braɪt/"
     }
   ],
   [
@@ -2589,34 +2589,34 @@
       "phonetic": "/ˈkɔləniz/"
     },
     {
-      "english": "seeing",
-      "chinese": "看见；会见",
-      "phonetic": "/'si:iŋ/"
+      "english": "day",
+      "chinese": "一天；白天",
+      "phonetic": "/dei/"
     },
     {
-      "english": "all",
-      "chinese": "全部；所有的",
-      "phonetic": "/ɒ:l/"
+      "english": "way",
+      "chinese": "方式；道路；方向",
+      "phonetic": "/wei/"
     },
     {
-      "english": "call",
-      "chinese": "呼叫；访问；打电话",
-      "phonetic": "/kɒ:l/"
+      "english": "say",
+      "chinese": "说",
+      "phonetic": "/seɪ/"
     },
     {
-      "english": "fall",
-      "chinese": "落下；秋天",
-      "phonetic": "/fɔːl/"
+      "english": "may",
+      "chinese": "可能；可以；五月",
+      "phonetic": "/mei/"
     },
     {
-      "english": "wall",
-      "chinese": "墙；墙壁；垣",
-      "phonetic": "/wɒ:l/"
+      "english": "pay",
+      "chinese": "付款；工资",
+      "phonetic": "/peɪ/"
     },
     {
-      "english": "small",
-      "chinese": "小的；少的；小型的",
-      "phonetic": "/smɒ:l/"
+      "english": "play",
+      "chinese": "玩；播放",
+      "phonetic": "/pleɪ/"
     }
   ],
   [
@@ -2666,34 +2666,34 @@
       "phonetic": "/els/"
     },
     {
-      "english": "won",
-      "chinese": "赢；获胜（win 的过去式）",
-      "phonetic": "/wʌn/"
+      "english": "all",
+      "chinese": "全部；所有的",
+      "phonetic": "/ɒ:l/"
     },
     {
-      "english": "make",
-      "chinese": "做；制作",
-      "phonetic": "/meɪk/"
+      "english": "call",
+      "chinese": "呼叫；访问；打电话",
+      "phonetic": "/kɒ:l/"
     },
     {
-      "english": "take",
-      "chinese": "拿；带",
-      "phonetic": "/teɪk/"
+      "english": "fall",
+      "chinese": "落下；秋天",
+      "phonetic": "/fɔːl/"
     },
     {
-      "english": "wake",
-      "chinese": "醒来；叫醒",
-      "phonetic": "/weɪk/"
+      "english": "wall",
+      "chinese": "墙；墙壁；垣",
+      "phonetic": "/wɒ:l/"
     },
     {
-      "english": "cake",
-      "chinese": "蛋糕",
-      "phonetic": "/keɪk/"
+      "english": "small",
+      "chinese": "小的；少的；小型的",
+      "phonetic": "/smɒ:l/"
     },
     {
-      "english": "shake",
-      "chinese": "摇动",
-      "phonetic": "/ʃeɪk/"
+      "english": "ball",
+      "chinese": "球",
+      "phonetic": "/bɔːl/"
     }
   ],
   [
@@ -2743,34 +2743,34 @@
       "phonetic": "/li:st/"
     },
     {
-      "english": "lymph",
-      "chinese": "淋巴液",
-      "phonetic": "/limf/"
+      "english": "make",
+      "chinese": "做；制作",
+      "phonetic": "/meɪk/"
     },
     {
-      "english": "cat",
-      "chinese": "猫",
-      "phonetic": "/kæt/"
+      "english": "take",
+      "chinese": "拿；带",
+      "phonetic": "/teɪk/"
     },
     {
-      "english": "hat",
-      "chinese": "帽子",
-      "phonetic": "/hæt/"
+      "english": "wake",
+      "chinese": "醒来；叫醒",
+      "phonetic": "/weɪk/"
     },
     {
-      "english": "bat",
-      "chinese": "蝙蝠；球棒",
-      "phonetic": "/bæt/"
+      "english": "cake",
+      "chinese": "蛋糕",
+      "phonetic": "/keɪk/"
     },
     {
-      "english": "fat",
-      "chinese": "胖的；脂肪",
-      "phonetic": "/fæt/"
+      "english": "shake",
+      "chinese": "摇动",
+      "phonetic": "/ʃeɪk/"
     },
     {
-      "english": "sat",
-      "chinese": "坐（sit 的过去式）",
-      "phonetic": "/sæt/"
+      "english": "lake",
+      "chinese": "湖",
+      "phonetic": "/leɪk/"
     }
   ],
   [
@@ -2820,34 +2820,34 @@
       "phonetic": "/ˈtju:məz/"
     },
     {
-      "english": "silent",
-      "chinese": "沉默的；安静的；无声的",
-      "phonetic": "/'sailәnt/"
+      "english": "cat",
+      "chinese": "猫",
+      "phonetic": "/kæt/"
     },
     {
-      "english": "tell",
-      "chinese": "告诉；说；吩咐",
-      "phonetic": "/tel/"
+      "english": "hat",
+      "chinese": "帽子",
+      "phonetic": "/hæt/"
     },
     {
-      "english": "well",
-      "chinese": "好；健康的；井",
-      "phonetic": "/wel/"
+      "english": "bat",
+      "chinese": "蝙蝠；球棒",
+      "phonetic": "/bæt/"
     },
     {
-      "english": "sell",
-      "chinese": "卖",
-      "phonetic": "/sel/"
+      "english": "fat",
+      "chinese": "胖的；脂肪",
+      "phonetic": "/fæt/"
     },
     {
-      "english": "spell",
-      "chinese": "拼写",
-      "phonetic": "/spel/"
+      "english": "sat",
+      "chinese": "坐（sit 的过去式）",
+      "phonetic": "/sæt/"
     },
     {
-      "english": "smell",
-      "chinese": "闻；气味",
-      "phonetic": "/smel/"
+      "english": "that",
+      "chinese": "那个；那；引导从句",
+      "phonetic": "/ðæt/"
     }
   ],
   [
@@ -2897,34 +2897,34 @@
       "phonetic": "/'sʌbdʒekt/"
     },
     {
-      "english": "dinner",
-      "chinese": "晚餐；正餐；宴会",
-      "phonetic": "/'dinә/"
+      "english": "tell",
+      "chinese": "告诉；说；吩咐",
+      "phonetic": "/tel/"
     },
     {
-      "english": "look",
-      "chinese": "看",
-      "phonetic": "/lʊk/"
+      "english": "well",
+      "chinese": "好；健康的；井",
+      "phonetic": "/wel/"
     },
     {
-      "english": "book",
-      "chinese": "书；预订",
-      "phonetic": "/bʊk/"
+      "english": "sell",
+      "chinese": "卖",
+      "phonetic": "/sel/"
     },
     {
-      "english": "cook",
-      "chinese": "做饭；厨师",
-      "phonetic": "/kʊk/"
+      "english": "spell",
+      "chinese": "拼写",
+      "phonetic": "/spel/"
     },
     {
-      "english": "hook",
-      "chinese": "钩子；钩住",
-      "phonetic": "/hʊk/"
+      "english": "smell",
+      "chinese": "闻；气味",
+      "phonetic": "/smel/"
     },
     {
-      "english": "took",
-      "chinese": "拿；带（take 的过去式）",
-      "phonetic": "/tuk/"
+      "english": "bell",
+      "chinese": "铃；钟",
+      "phonetic": "/bel/"
     }
   ],
   [
@@ -2974,34 +2974,34 @@
       "phonetic": "/dɑ:k/"
     },
     {
-      "english": "questions",
-      "chinese": "问题",
-      "phonetic": ""
+      "english": "look",
+      "chinese": "看",
+      "phonetic": "/lʊk/"
     },
     {
-      "english": "hear",
-      "chinese": "听到；倾听；听说",
-      "phonetic": "/hiә/"
+      "english": "book",
+      "chinese": "书；预订",
+      "phonetic": "/bʊk/"
     },
     {
-      "english": "near",
-      "chinese": "近的；近亲的；近似的",
-      "phonetic": "/niә/"
+      "english": "cook",
+      "chinese": "做饭；厨师",
+      "phonetic": "/kʊk/"
     },
     {
-      "english": "year",
-      "chinese": "年；年度",
-      "phonetic": "/jiә/"
+      "english": "took",
+      "chinese": "拿；带（take 的过去式）",
+      "phonetic": "/tuk/"
     },
     {
-      "english": "dear",
-      "chinese": "亲爱的人；亲爱的；昂贵的",
-      "phonetic": "/'diә/"
+      "english": "hook",
+      "chinese": "钩子；钩住",
+      "phonetic": "/hʊk/"
     },
     {
-      "english": "fear",
-      "chinese": "恐怖；害怕；担心",
-      "phonetic": "/fiә/"
+      "english": "shook",
+      "chinese": "摇动（shake 的过去式）",
+      "phonetic": "/ʃʊk/"
     }
   ],
   [
@@ -3051,34 +3051,34 @@
       "phonetic": "/fel/"
     },
     {
-      "english": "foreign",
-      "chinese": "外国的；外交的；外省的",
-      "phonetic": "/'fɒ:rin/"
+      "english": "ear",
+      "chinese": "耳朵",
+      "phonetic": "/ɪr/"
     },
     {
-      "english": "old",
-      "chinese": "老的；旧的；从前的",
-      "phonetic": "/әuld/"
+      "english": "bear",
+      "chinese": "熊；承受",
+      "phonetic": "/ber/"
     },
     {
-      "english": "cold",
-      "chinese": "感冒；寒冷；寒冷的",
-      "phonetic": "/kәuld/"
+      "english": "near",
+      "chinese": "近的；近亲的；近似的",
+      "phonetic": "/niә/"
     },
     {
-      "english": "hold",
-      "chinese": "拿住；保持",
-      "phonetic": "/hoʊld/"
+      "english": "year",
+      "chinese": "年；年度",
+      "phonetic": "/jiә/"
     },
     {
-      "english": "told",
-      "chinese": "告诉（tell 的过去式）",
-      "phonetic": "/tәuld/"
+      "english": "dear",
+      "chinese": "亲爱的人；亲爱的；昂贵的",
+      "phonetic": "/'diә/"
     },
     {
-      "english": "gold",
-      "chinese": "金；金色",
-      "phonetic": "/ɡoʊld/"
+      "english": "fear",
+      "chinese": "恐怖；害怕；担心",
+      "phonetic": "/fiә/"
     }
   ],
   [
@@ -3128,34 +3128,34 @@
       "phonetic": "/klәuzd/"
     },
     {
-      "english": "particularly",
-      "chinese": "特别；格外；尤其",
-      "phonetic": "/pә'tikjjlәli/"
+      "english": "old",
+      "chinese": "老的；旧的；从前的",
+      "phonetic": "/әuld/"
     },
     {
-      "english": "sound",
-      "chinese": "声音；语音；吵闹",
-      "phonetic": "/saund/"
+      "english": "cold",
+      "chinese": "感冒；寒冷；寒冷的",
+      "phonetic": "/kәuld/"
     },
     {
-      "english": "round",
-      "chinese": "圆；圆形物；巡回",
-      "phonetic": "/raund/"
+      "english": "hold",
+      "chinese": "拿住；保持",
+      "phonetic": "/hoʊld/"
     },
     {
-      "english": "found",
-      "chinese": "建立；创立；铸造",
-      "phonetic": "/faund/"
+      "english": "told",
+      "chinese": "告诉（tell 的过去式）",
+      "phonetic": "/tәuld/"
     },
     {
-      "english": "around",
-      "chinese": "在周围；大约；到处",
-      "phonetic": "/ә'raund/"
+      "english": "gold",
+      "chinese": "金；金色",
+      "phonetic": "/ɡoʊld/"
     },
     {
-      "english": "ground",
-      "chinese": "土地；战场；场地",
-      "phonetic": "/graund/"
+      "english": "sold",
+      "chinese": "卖了；出售（sell 的过去式和过去分词）",
+      "phonetic": "/soʊld/"
     }
   ],
   [
@@ -3205,34 +3205,34 @@
       "phonetic": "/ni:/"
     },
     {
-      "english": "symptoms",
-      "chinese": "症状",
-      "phonetic": ""
+      "english": "sound",
+      "chinese": "声音；语音；吵闹",
+      "phonetic": "/saund/"
     },
     {
-      "english": "down",
-      "chinese": "向下；情绪低落的",
-      "phonetic": "/daun/"
+      "english": "round",
+      "chinese": "圆；圆形物；巡回",
+      "phonetic": "/raund/"
     },
     {
-      "english": "town",
-      "chinese": "城镇；市；镇",
-      "phonetic": "/taun/"
+      "english": "found",
+      "chinese": "建立；创立；铸造",
+      "phonetic": "/faund/"
     },
     {
-      "english": "brown",
-      "chinese": "棕色的；棕色",
-      "phonetic": "/braʊn/"
+      "english": "around",
+      "chinese": "在周围；大约；到处",
+      "phonetic": "/ә'raund/"
     },
     {
-      "english": "crown",
-      "chinese": "王冠",
-      "phonetic": "/kraʊn/"
+      "english": "ground",
+      "chinese": "土地；战场；场地",
+      "phonetic": "/graund/"
     },
     {
-      "english": "clown",
-      "chinese": "小丑",
-      "phonetic": "/klaʊn/"
+      "english": "bound",
+      "chinese": "跳；界限；被束缚的",
+      "phonetic": "/baʊnd/"
     }
   ],
   [
@@ -3282,34 +3282,34 @@
       "phonetic": "/'ɑ:tәri/"
     },
     {
-      "english": "changes",
-      "chinese": "变化；改变",
-      "phonetic": ""
+      "english": "down",
+      "chinese": "向下；情绪低落的",
+      "phonetic": "/daun/"
     },
     {
-      "english": "air",
-      "chinese": "空气；旋律；态度",
-      "phonetic": "/єә/"
+      "english": "town",
+      "chinese": "城镇；市；镇",
+      "phonetic": "/taun/"
     },
     {
-      "english": "fair",
-      "chinese": "公平的；晴朗的",
-      "phonetic": "/fer/"
+      "english": "brown",
+      "chinese": "棕色的；棕色",
+      "phonetic": "/braʊn/"
     },
     {
-      "english": "hair",
-      "chinese": "头发；毛发；些微",
-      "phonetic": "/hєә/"
+      "english": "crown",
+      "chinese": "王冠",
+      "phonetic": "/kraʊn/"
     },
     {
-      "english": "pair",
-      "chinese": "一对",
-      "phonetic": "/per/"
+      "english": "clown",
+      "chinese": "小丑",
+      "phonetic": "/klaʊn/"
     },
     {
-      "english": "chair",
-      "chinese": "椅子",
-      "phonetic": "/tʃer/"
+      "english": "gown",
+      "chinese": "长袍；礼服",
+      "phonetic": "/ɡaʊn/"
     }
   ],
   [
@@ -3359,34 +3359,34 @@
       "phonetic": "/briŋ/"
     },
     {
-      "english": "late",
-      "chinese": "迟的；晚的；已故的",
-      "phonetic": "/leit/"
+      "english": "air",
+      "chinese": "空气；旋律；态度",
+      "phonetic": "/єә/"
     },
     {
-      "english": "same",
-      "chinese": "相同的；同样",
-      "phonetic": "/seim/"
+      "english": "fair",
+      "chinese": "公平的；晴朗的",
+      "phonetic": "/fer/"
     },
     {
-      "english": "name",
-      "chinese": "名字；名称；姓名",
-      "phonetic": "/neim/"
+      "english": "hair",
+      "chinese": "头发；毛发；些微",
+      "phonetic": "/hєә/"
     },
     {
-      "english": "game",
-      "chinese": "游戏；比赛",
-      "phonetic": "/ɡeɪm/"
+      "english": "pair",
+      "chinese": "一对",
+      "phonetic": "/per/"
     },
     {
-      "english": "came",
-      "chinese": "来（come 的过去式）",
-      "phonetic": "/keim/"
+      "english": "chair",
+      "chinese": "椅子",
+      "phonetic": "/tʃer/"
     },
     {
-      "english": "blame",
-      "chinese": "责怪；责任",
-      "phonetic": "/bleɪm/"
+      "english": "stair",
+      "chinese": "一级楼梯；楼梯",
+      "phonetic": "/ster/"
     }
   ],
   [
@@ -3436,34 +3436,34 @@
       "phonetic": "/'sʌmwʌn/"
     },
     {
-      "english": "village",
-      "chinese": "村庄；乡村的；村庄的",
-      "phonetic": "/'vilidʒ/"
+      "english": "late",
+      "chinese": "迟的；晚的；已故的",
+      "phonetic": "/leit/"
     },
     {
-      "english": "end",
-      "chinese": "结束；终点；目标",
-      "phonetic": "/end/"
+      "english": "date",
+      "chinese": "日期；约会",
+      "phonetic": "/deɪt/"
     },
     {
-      "english": "send",
-      "chinese": "发送；寄",
-      "phonetic": "/send/"
+      "english": "hate",
+      "chinese": "讨厌",
+      "phonetic": "/heɪt/"
     },
     {
-      "english": "spend",
-      "chinese": "花费；度过",
-      "phonetic": "/spend/"
+      "english": "rate",
+      "chinese": "比率；评价",
+      "phonetic": "/reɪt/"
     },
     {
-      "english": "friend",
-      "chinese": "朋友",
-      "phonetic": "/frend/"
+      "english": "state",
+      "chinese": "状态；州；陈述",
+      "phonetic": "/steit/"
     },
     {
-      "english": "weekend",
-      "chinese": "周末",
-      "phonetic": "/ˈwiːkend/"
+      "english": "gate",
+      "chinese": "大门；入口",
+      "phonetic": "/ɡeɪt/"
     }
   ],
   [
@@ -3513,34 +3513,34 @@
       "phonetic": "/ˈlisnd/"
     },
     {
-      "english": "various",
-      "chinese": "不同的；各种的；多方面的",
-      "phonetic": "/'vєәriәs/"
+      "english": "same",
+      "chinese": "相同的；同样",
+      "phonetic": "/seim/"
     },
     {
-      "english": "and",
-      "chinese": "和；而且",
-      "phonetic": "/ænd/"
+      "english": "name",
+      "chinese": "名字；名称；姓名",
+      "phonetic": "/neim/"
     },
     {
-      "english": "hand",
-      "chinese": "手；爪；指针",
-      "phonetic": "/hænd/"
+      "english": "game",
+      "chinese": "游戏；比赛",
+      "phonetic": "/ɡeɪm/"
     },
     {
-      "english": "land",
-      "chinese": "陆地；地面；地界",
-      "phonetic": "/lænd/"
+      "english": "came",
+      "chinese": "来（come 的过去式）",
+      "phonetic": "/keim/"
     },
     {
-      "english": "stand",
-      "chinese": "站立",
-      "phonetic": "/stænd/"
+      "english": "blame",
+      "chinese": "责怪；责任",
+      "phonetic": "/bleɪm/"
     },
     {
-      "english": "understand",
-      "chinese": "理解；了解；领会",
-      "phonetic": "/.ʌndә'stænd/"
+      "english": "frame",
+      "chinese": "框架；给……镶框",
+      "phonetic": "/freɪm/"
     }
   ],
   [
@@ -3590,34 +3590,34 @@
       "phonetic": "/ә'piә/"
     },
     {
-      "english": "change",
-      "chinese": "变化；找回的零钱；找头",
-      "phonetic": "/tʃeindʒ/"
+      "english": "end",
+      "chinese": "结束；终点；目标",
+      "phonetic": "/end/"
     },
     {
-      "english": "in",
-      "chinese": "在……里面；在……期间",
-      "phonetic": "/in/"
+      "english": "send",
+      "chinese": "发送；寄",
+      "phonetic": "/send/"
     },
     {
-      "english": "win",
-      "chinese": "赢",
-      "phonetic": "/wɪn/"
+      "english": "spend",
+      "chinese": "花费；度过",
+      "phonetic": "/spend/"
     },
     {
-      "english": "begin",
-      "chinese": "开始",
-      "phonetic": "/bɪˈɡɪn/"
+      "english": "friend",
+      "chinese": "朋友",
+      "phonetic": "/frend/"
     },
     {
-      "english": "skin",
-      "chinese": "皮肤；皮；剥皮",
-      "phonetic": "/skin/"
+      "english": "weekend",
+      "chinese": "周末",
+      "phonetic": "/ˈwiːkend/"
     },
     {
-      "english": "thin",
-      "chinese": "薄的；细的；瘦的",
-      "phonetic": "/θin/"
+      "english": "bend",
+      "chinese": "弯曲；转弯",
+      "phonetic": "/bend/"
     }
   ]
 ];

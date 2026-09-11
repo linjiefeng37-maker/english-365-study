@@ -278,7 +278,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=word-blocks-30", { updateViaCache: "none" })
+          .register("./sw.js?v=desktop-day11-50-31", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -2316,7 +2316,6 @@
     const key = english.toLowerCase();
     const meaning = shortMeaning(word.chinese) || word.chinese;
     const special = dailyAllowedSentenceFactories[key]?.(word);
-    if (special) return [special];
 
     let candidates;
     if (dailyAdjectiveWords.has(key)) {
@@ -2355,7 +2354,7 @@
         sentence(`We think about the ${english}.`, `我们想到这个${meaning}。`, [english], [["We think about", "我们想到"], [`the ${english}`, `这个${meaning}`]]),
       ];
     }
-    return rotateDailyItems(candidates, seed);
+    return rotateDailyItems(special ? [special, ...candidates] : candidates, seed);
   }
 
   function dailyNaturalSentence(word, words, allowedVocabulary, seed = 0) {
