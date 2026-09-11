@@ -265,7 +265,7 @@
       });
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=cache-network-first-24", { updateViaCache: "none" })
+          .register("./sw.js?v=daily-sentence-exact-25", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1350,132 +1350,808 @@
     return [...items.slice(start), ...items.slice(0, start)];
   }
 
-  function dailyWordListEnglish(words) {
-    const quoted = words.map((word) => `“${word.english}”`);
-    if (quoted.length <= 1) return quoted[0] || "";
-    if (quoted.length === 2) return `${quoted[0]} and ${quoted[1]}`;
-    return `${quoted.slice(0, -1).join(", ")}, and ${quoted.at(-1)}`;
+  function dailyLine(english, focus) {
+    return sentence(english, "", focus, []);
   }
 
-  function dailyWordListBreakdown(words) {
-    return words.map((word, index) => {
-      const isLast = index === words.length - 1;
-      const connector = index === 0 ? "" : isLast ? "and " : "";
-      const comma = !isLast && words.length > 2 ? "," : "";
-      const chineseConnector = index === 0 ? "" : "和";
-      return [
-        `${connector}“${word.english}”${comma}`,
-        `${chineseConnector}${shortMeaning(word.chinese) || word.chinese}`,
+  const dailyNaturalSentenceLibrary = {
+    1: [
+      sentence("I am ready.", "我准备好了。", ["I", "am"], [["I", "我"], ["am ready", "准备好了"]]),
+      sentence("You are kind.", "你很友善。", ["you", "are"], [["You", "你"], ["are kind", "很友善"]]),
+      sentence("He is here.", "他在这里。", ["he", "is"], [["He", "他"], ["is here", "在这里"]]),
+      sentence("She smiles.", "她微笑。", ["she"], [["She", "她"], ["smiles", "微笑"]]),
+      sentence("We want to learn English.", "我们想学习英语。", ["we", "want", "learn"], [["We", "我们"], ["want to learn", "想学习"], ["English", "英语"]]),
+      sentence("They like rice.", "他们喜欢米饭。", ["they", "like"], [["They", "他们"], ["like", "喜欢"], ["rice", "米饭"]]),
+      sentence("Please go home.", "请回家。", ["go"], [["Please", "请"], ["go home", "回家"]]),
+      sentence("Please come in.", "请进来。", ["come"], [["Please", "请"], ["come in", "进来"]]),
+      sentence("Children eat dinner at six.", "孩子们六点吃晚餐。", ["eat"], [["Children", "孩子们"], ["eat dinner", "吃晚餐"], ["at six", "在六点"]]),
+    ],
+    2: [
+      sentence("I drink water at home.", "我在家喝水。", ["drink", "home"], [["I", "我"], ["drink water", "喝水"], ["at home", "在家"]]),
+      sentence("We see our teacher at school.", "我们在学校看见老师。", ["see", "school"], [["We", "我们"], ["see our teacher", "看见我们的老师"], ["at school", "在学校"]]),
+      sentence("You know what to do.", "你知道该做什么。", ["know", "do"], [["You", "你"], ["know", "知道"], ["what to do", "该做什么"]]),
+      sentence("I have work today.", "我今天有工作。", ["have", "work", "today"], [["I", "我"], ["have work", "有工作"], ["today", "今天"]]),
+      sentence("We will meet tomorrow.", "我们明天见面。", ["tomorrow"], [["We will meet", "我们将见面"], ["tomorrow", "明天"]]),
+      sentence("Please come now.", "请现在过来。", ["now"], [["Please come", "请过来"], ["now", "现在"]]),
+      sentence("This food is good, not bad.", "这个食物很好，不坏。", ["good", "bad"], [["This food", "这个食物"], ["is good", "是好的"], ["not bad", "不是坏的"]]),
+      sentence("She studies English in her free time.", "她在空闲时间学习英语。", ["English", "time"], [["She studies", "她学习"], ["English", "英语"], ["in her free time", "在她的空闲时间"]]),
+    ],
+    3: [
+      sentence("I make food at home.", "我在家做食物。", ["make", "food"], [["I", "我"], ["make food", "做食物"], ["at home", "在家"]]),
+      sentence("We get water here.", "我们在这里取水。", ["get", "water"], [["We", "我们"], ["get water", "取水"], ["here", "这里"]]),
+      sentence("Please take this bag.", "请拿这个包。", ["take"], [["Please", "请"], ["take", "拿"], ["this bag", "这个包"]]),
+      sentence("Give me a minute.", "给我一分钟。", ["give"], [["Give", "给"], ["me", "我"], ["a minute", "一分钟"]]),
+      sentence("Look at the sky.", "看天空。", ["look"], [["Look at", "看"], ["the sky", "天空"]]),
+      sentence("Say your name.", "说出你的名字。", ["say"], [["Say", "说出"], ["your name", "你的名字"]]),
+      sentence("I think you are right.", "我认为你是对的。", ["think"], [["I", "我"], ["think", "认为"], ["you are right", "你是对的"]]),
+      sentence("I feel happy today.", "我今天感觉开心。", ["feel", "happy"], [["I", "我"], ["feel happy", "感觉开心"], ["today", "今天"]]),
+      sentence("Tired people need help.", "累的人需要帮助。", ["tired", "need", "help"], [["Tired people", "累的人"], ["need help", "需要帮助"]]),
+      sentence("Hungry children eat first.", "饿了的孩子先吃。", ["hungry"], [["Hungry children", "饿了的孩子"], ["eat first", "先吃"]]),
+    ],
+    4: [
+      sentence("I can read this book.", "我能读这本书。", ["can", "read"], [["I can read", "我能读"], ["this book", "这本书"]]),
+      sentence("Please write your name.", "请写你的名字。", ["write"], [["Please write", "请写"], ["your name", "你的名字"]]),
+      sentence("We speak English at home.", "我们在家说英语。", ["speak"], [["We speak", "我们说"], ["English", "英语"], ["at home", "在家"]]),
+      sentence("Listen to this song.", "听这首歌。", ["listen"], [["Listen to", "听"], ["this song", "这首歌"]]),
+      sentence("Please use my phone.", "请使用我的手机。", ["use", "phone"], [["Please use", "请使用"], ["my phone", "我的手机"]]),
+      sentence("I need money to buy food.", "我需要钱来买食物。", ["money", "buy"], [["I need", "我需要"], ["money", "钱"], ["to buy food", "来买食物"]]),
+      sentence("My friend visits her family.", "我的朋友探望她的家人。", ["friend", "family"], [["My friend", "我的朋友"], ["visits", "探望"], ["her family", "她的家人"]]),
+      sentence("The day begins in the morning.", "一天从早晨开始。", ["day", "morning"], [["The day", "这一天"], ["begins", "开始"], ["in the morning", "在早晨"]]),
+      sentence("Stars shine at night.", "星星在夜晚发光。", ["night"], [["Stars shine", "星星发光"], ["at night", "在夜晚"]]),
+      sentence("Children love music.", "孩子们喜欢音乐。", ["love"], [["Children", "孩子们"], ["love", "喜欢"], ["music", "音乐"]]),
+    ],
+    5: [
+      sentence("The door of my room is open.", "我房间的门是开着的。", ["the", "of"], [["The door", "这扇门"], ["of my room", "我的房间的"], ["is open", "是开着的"]]),
+      sentence("You and I can walk to school.", "你和我可以步行去学校。", ["and", "to"], [["You and I", "你和我"], ["can walk", "可以步行"], ["to school", "去学校"]]),
+      sentence("She lives in a small town.", "她住在一个小镇里。", ["in", "a"], [["She lives", "她住"], ["in", "在里面"], ["a small town", "一个小镇"]]),
+      sentence("I know that he was here.", "我知道他曾经在这里。", ["that", "was"], [["I know", "我知道"], ["that", "引出后面的事"], ["he was here", "他曾经在这里"]]),
+      sentence("It is his book.", "它是他的书。", ["it", "his"], [["It", "它"], ["is", "是"], ["his book", "他的书"]]),
+      sentence("Come with me.", "和我一起走。", ["with"], [["Come", "来"], ["with me", "和我一起"]]),
+      sentence("She works as my guide.", "她担任我的向导。", ["as"], [["She works", "她工作"], ["as my guide", "作为我的向导"]]),
+      sentence("We had dinner early.", "我们很早吃了晚餐。", ["had"], [["We had dinner", "我们吃了晚餐"], ["early", "很早"]]),
+      sentence("This gift is for you.", "这个礼物是给你的。", ["for"], [["This gift", "这个礼物"], ["is for you", "是给你的"]]),
+      sentence("Meet me at noon.", "中午见我。", ["at"], [["Meet me", "见我"], ["at noon", "在中午"]]),
+    ],
+    6: [
+      sentence("The picture was painted by her.", "这幅画是由她画的。", ["by", "her"], [["The picture", "这幅画"], ["was painted", "被画"], ["by her", "由她"]]),
+      sentence("Your keys are on the table.", "你的钥匙在桌子上。", ["on"], [["Your keys", "你的钥匙"], ["are on", "在上面"], ["the table", "桌子"]]),
+      sentence("Do not be late.", "不要迟到。", ["not", "be"], [["Do not", "不要"], ["be late", "迟到"]]),
+      sentence("He came from work.", "他从工作地点过来。", ["from"], [["He came", "他过来"], ["from work", "从工作地点"]]),
+      sentence("I called, but nobody answered.", "我打了电话，但是没人接。", ["but"], [["I called", "我打了电话"], ["but", "但是"], ["nobody answered", "没人接"]]),
+      sentence("Tea or coffee?", "茶还是咖啡？", ["or"], [["Tea", "茶"], ["or", "或者"], ["coffee", "咖啡"]]),
+      sentence("Please ask him.", "请问他。", ["him"], [["Please ask", "请问"], ["him", "他"]]),
+      sentence("Which color do you like?", "你喜欢哪一种颜色？", ["which"], [["Which color", "哪一种颜色"], ["do you like", "你喜欢"]]),
+      sentence("They were all ready.", "他们全部准备好了。", ["were", "all"], [["They were", "他们是"], ["all", "全部"], ["ready", "准备好的"]]),
+      sentence("This is my seat.", "这是我的座位。", ["this"], [["This", "这个"], ["is", "是"], ["my seat", "我的座位"]]),
+      sentence("She said hello.", "她说了你好。", ["said"], [["She", "她"], ["said", "说了"], ["hello", "你好"]]),
+      sentence("He ate an apple.", "他吃了一个苹果。", ["an"], [["He ate", "他吃了"], ["an apple", "一个苹果"]]),
+    ],
+    7: [
+      sentence("I have one question.", "我有一个问题。", ["one"], [["I have", "我有"], ["one question", "一个问题"]]),
+      sentence("Who is there?", "谁在那里？", ["who", "there"], [["Who", "谁"], ["is there", "在那里"]]),
+      sentence("It was late, so we left.", "时间很晚，所以我们离开了。", ["so"], [["It was late", "时间很晚"], ["so", "所以"], ["we left", "我们离开了"]]),
+      sentence("What is their name?", "什么是他们的名字？", ["what", "their"], [["What", "什么"], ["is", "是"], ["their name", "他们的名字"]]),
+      sentence("Call me when you arrive.", "你到达时给我打电话。", ["when"], [["Call me", "给我打电话"], ["when you arrive", "当你到达时"]]),
+      sentence("She has been busy.", "她一直很忙。", ["been"], [["She has been", "她一直是"], ["busy", "忙的"]]),
+      sentence("It may rain.", "可能会下雨。", ["may"], [["It may rain", "可能下雨"]]),
+      sentence("If you need help, call me.", "如果你需要帮助，就给我打电话。", ["if"], [["If you need help", "如果你需要帮助"], ["call me", "给我打电话"]]),
+      sentence("No cars are allowed.", "不允许汽车进入。", ["no"], [["No cars", "没有汽车"], ["are allowed", "被允许"]]),
+      sentence("Please stand up.", "请站起来。", ["up"], [["Please stand", "请站"], ["up", "起来"]]),
+      sentence("My phone is new.", "我的手机是新的。", ["my"], [["My phone", "我的手机"], ["is new", "是新的"]]),
+      sentence("I saw them go into the shop.", "我看见他们走进商店。", ["them", "into"], [["I saw", "我看见"], ["them", "他们"], ["go into", "走进"], ["the shop", "商店"]]),
+    ],
+    8: [
+      sentence("I need more time.", "我需要更多时间。", ["more"], [["I need", "我需要"], ["more time", "更多时间"]]),
+      sentence("Please go out.", "请出去。", ["out"], [["Please go", "请走"], ["out", "出去"]]),
+      sentence("Would you help me?", "你愿意帮助我吗？", ["would", "me"], [["Would you", "你愿意吗"], ["help me", "帮助我"]]),
+      sentence("She did her best.", "她尽了最大努力。", ["did"], [["She did", "她做了"], ["her best", "她最好的努力"]]),
+      sentence("He only asked once.", "他只问了一次。", ["only"], [["He", "他"], ["only", "只"], ["asked once", "问了一次"]]),
+      sentence("Could we start now?", "我们现在可以开始吗？", ["could"], [["Could we", "我们可以吗"], ["start now", "现在开始"]]),
+      sentence("The man has a red car.", "这个男人有一辆红色汽车。", ["man", "has"], [["The man", "这个男人"], ["has", "有"], ["a red car", "一辆红色汽车"]]),
+      sentence("The dog wagged its tail.", "这只狗摇了它的尾巴。", ["its"], [["The dog", "这只狗"], ["wagged", "摇了"], ["its tail", "它的尾巴"]]),
+      sentence("The fat cat sat on my hat.", "这只胖猫坐在我的帽子上。", ["fat", "cat", "sat", "hat"], [["The fat cat", "这只胖猫"], ["sat on", "坐在上面"], ["my hat", "我的帽子"]]),
+      sentence("A bat flew overhead.", "一只蝙蝠从头顶飞过。", ["bat"], [["A bat", "一只蝙蝠"], ["flew overhead", "从头顶飞过"]]),
+    ],
+    9: [
+      sentence("Tell me about the trip.", "告诉我关于这次旅行的事。", ["tell", "about"], [["Tell me", "告诉我"], ["about the trip", "关于这次旅行"]]),
+      sentence("I have never seen such a view.", "我从没见过这样的景色。", ["such"], [["I have never seen", "我从没见过"], ["such a view", "这样的景色"]]),
+      sentence("We ate before noon.", "我们在中午之前吃了东西。", ["before"], [["We ate", "我们吃了东西"], ["before noon", "在中午之前"]]),
+      sentence("The soup is very hot.", "这汤非常热。", ["very"], [["The soup", "这汤"], ["is very hot", "是非常热的"]]),
+      sentence("How should we begin?", "我们应该怎样开始？", ["how", "should"], [["How", "怎样"], ["should we begin", "我们应该开始"]]),
+      sentence("The plane flew over town.", "飞机从小镇上空飞过。", ["over"], [["The plane flew", "飞机飞过"], ["over town", "小镇上空"]]),
+      sentence("These shoes are new.", "这些鞋是新的。", ["these", "new"], [["These shoes", "这些鞋"], ["are new", "是新的"]]),
+      sentence("She sings well.", "她唱得很好。", ["well"], [["She sings", "她唱歌"], ["well", "很好"]]),
+      sentence("They sell fresh bread.", "他们卖新鲜面包。", ["sell"], [["They sell", "他们卖"], ["fresh bread", "新鲜面包"]]),
+      sentence("Please spell your name.", "请拼写你的名字。", ["spell", "your"], [["Please spell", "请拼写"], ["your name", "你的名字"]]),
+      sentence("I smell coffee.", "我闻到咖啡的气味。", ["smell"], [["I smell", "我闻到"], ["coffee", "咖啡"]]),
+    ],
+    10: [
+      sentence("The two men arrived first.", "这两个男人最先到达。", ["two", "men", "first"], [["The two men", "这两个男人"], ["arrived", "到达"], ["first", "最先"]]),
+      sentence("He cooked dinner himself.", "他亲自做了晚餐。", ["himself"], [["He", "他"], ["cooked dinner", "做了晚餐"], ["himself", "亲自"]]),
+      sentence("Please look down.", "请向下看。", ["look", "down"], [["Please", "请"], ["look", "看"], ["down", "向下"]]),
+      sentence("She held the book near her face.", "她把书拿在脸旁。", ["book", "face"], [["She", "她"], ["held", "拿着"], ["the book", "这本书"], ["near her face", "靠近她的脸"]]),
+      sentence("Our French teacher read the same story.", "我们的法语老师读了同一个故事。", ["our", "french", "same"], [["Our", "我们的"], ["French teacher", "法语老师"], ["read", "读了"], ["the same story", "同一个故事"]]),
+      sentence("I put the bag upon the table.", "我把包放在桌上。", ["upon"], [["I", "我"], ["put the bag", "放这个包"], ["upon the table", "在桌子上"]]),
+      sentence("The hook fell, so I took it.", "钩子掉了，所以我把它拿起来。", ["hook", "took"], [["The hook", "这个钩子"], ["fell", "掉了"], ["so I", "所以我"], ["took it", "拿起它"]]),
+      sentence("The cook is here.", "厨师在这里。", ["cook"], [["The cook", "这个厨师"], ["is here", "在这里"]]),
+    ],
+    11: [
+      sentence("The United States has many cities.", "美国有很多城市。", ["states"], [["The United States", "美国"], ["has", "有"], ["many cities", "很多城市"]]),
+      sentence("My friend came last year.", "我的朋友去年来了。", ["came", "year"], [["My friend", "我的朋友"], ["came", "来了"], ["last year", "去年"]]),
+      sentence("Where is my room?", "哪里是我的房间？", ["where", "room"], [["Where", "哪里"], ["is", "是"], ["my room", "我的房间"]]),
+      sentence("The cat is under the chair.", "这只猫在椅子下面。", ["under"], [["The cat", "这只猫"], ["is", "在"], ["under the chair", "椅子下面"]]),
+      sentence("You must close your eyes.", "你必须闭上眼睛。", ["must", "eyes"], [["You", "你"], ["must close", "必须闭上"], ["your eyes", "你的眼睛"]]),
+      sentence("I can still hear the music.", "我仍然能听到音乐。", ["still", "hear"], [["I", "我"], ["can still hear", "仍然能听到"], ["the music", "音乐"]]),
+      sentence("Even small steps help.", "即使小步前进也有帮助。", ["even"], [["Even small steps", "即使小步前进"], ["help", "也有帮助"]]),
+      sentence("Being kind is important.", "保持善良很重要。", ["being"], [["Being kind", "保持善良"], ["is important", "很重要"]]),
+      sentence("The store is near my home.", "这家商店在我家附近。", ["near"], [["The store", "这家商店"], ["is near", "在附近"], ["my home", "我的家"]]),
+      sentence("Dear Mom, I miss you.", "亲爱的妈妈，我想你。", ["dear"], [["Dear Mom", "亲爱的妈妈"], ["I", "我"], ["miss you", "想你"]]),
+      sentence("The child has no fear.", "这个孩子没有恐惧。", ["fear"], [["The child", "这个孩子"], ["has no fear", "没有恐惧"]]),
+    ],
+    12: [
+      sentence("Please say that again.", "请再说一次。", ["again"], [["Please say that", "请说那个"], ["again", "再一次"]]),
+      sentence("This way is faster.", "这条路更快。", ["way"], [["This way", "这条路"], ["is faster", "更快"]]),
+      sentence("Can I have another cup?", "我可以再要一杯吗？", ["another"], [["Can I have", "我可以要吗"], ["another cup", "另一杯"]]),
+      sentence("The dog ran away.", "这只狗跑走了。", ["away"], [["The dog ran", "这只狗跑了"], ["away", "离开"]]),
+      sentence("The general raised his hand.", "这位将军举起了手。", ["general", "hand"], [["The general", "这位将军"], ["raised", "举起"], ["his hand", "他的手"]]),
+      sentence("She left through the back door.", "她穿过后门离开了。", ["left", "through"], [["She left", "她离开"], ["through the back door", "穿过后门"]]),
+      sentence("The movie began at eight.", "电影八点开始。", ["began"], [["The movie", "这部电影"], ["began", "开始"], ["at eight", "在八点"]]),
+      sentence("We had a great day.", "我们度过了很棒的一天。", ["great"], [["We had", "我们度过"], ["a great day", "很棒的一天"]]),
+      sentence("The old house feels cold.", "这栋老房子感觉很冷。", ["old", "cold"], [["The old house", "这栋老房子"], ["feels cold", "感觉很冷"]]),
+      sentence("Hold this box.", "拿住这个盒子。", ["hold"], [["Hold", "拿住"], ["this box", "这个盒子"]]),
+      sentence("He told me the truth.", "他告诉我真相。", ["told"], [["He told me", "他告诉我"], ["the truth", "真相"]]),
+      sentence("The ring is made of gold.", "这枚戒指由黄金制成。", ["gold"], [["The ring", "这枚戒指"], ["is made of", "由……制成"], ["gold", "黄金"]]),
+    ],
+    13: [
+      sentence("The army returned home.", "军队回家了。", ["army"], [["The army", "这支军队"], ["returned home", "回家了"]]),
+      sentence("She looked back.", "她回头看。", ["looked", "back"], [["She looked", "她看"], ["back", "向后"]]),
+      sentence("Count the chairs.", "数一数这些椅子。", ["count"], [["Count", "数一数"], ["the chairs", "这些椅子"]]),
+      sentence("I ate the whole apple.", "我吃了整个苹果。", ["whole"], [["I ate", "我吃了"], ["the whole apple", "整个苹果"]]),
+      sentence("Shall we begin?", "我们开始好吗？", ["shall"], [["Shall we", "我们好吗"], ["begin", "开始"]]),
+      sentence("Turn your head right.", "把你的头转向右边。", ["head", "right"], [["Turn", "转动"], ["your head", "你的头"], ["right", "向右"]]),
+      sentence("This is part of the plan.", "这是计划的一部分。", ["part"], [["This", "这个"], ["is part of", "是一部分"], ["the plan", "这个计划"]]),
+      sentence("The government announced a new law.", "政府宣布了一项新法律。", ["government"], [["The government", "政府"], ["announced", "宣布"], ["a new law", "一项新法律"]]),
+      sentence("That sound came from a round bell.", "那个声音来自一口圆形的钟。", ["sound", "round"], [["That sound", "那个声音"], ["came from", "来自"], ["a round bell", "一口圆形的钟"]]),
+      sentence("We found the keys.", "我们找到了钥匙。", ["found"], [["We found", "我们找到"], ["the keys", "这些钥匙"]]),
+      sentence("Children ran around the yard.", "孩子们绕着院子跑。", ["around"], [["Children ran", "孩子们跑"], ["around the yard", "绕着院子"]]),
+      sentence("The ball fell to the ground.", "球落到了地面。", ["ground"], [["The ball fell", "这个球落下"], ["to the ground", "到地面"]]),
+    ],
+    14: [
+      sentence("Something smells good.", "某样东西闻起来很好。", ["something"], [["Something", "某样东西"], ["smells good", "闻起来很好"]]),
+      sentence("Why are you smiling?", "为什么你在微笑？", ["why"], [["Why", "为什么"], ["are you smiling", "你在微笑"]]),
+      sentence("We are having dinner.", "我们正在吃晚餐。", ["having"], [["We are having", "我们正在吃"], ["dinner", "晚餐"]]),
+      sentence("This place is quiet.", "这个地方很安静。", ["place"], [["This place", "这个地方"], ["is quiet", "很安静"]]),
+      sentence("I do not have much time.", "我没有很多时间。", ["much"], [["I do not have", "我没有"], ["much time", "很多时间"]]),
+      sentence("The state built a new house.", "这个州建了一栋新房子。", ["state", "house"], [["The state", "这个州"], ["built", "建造"], ["a new house", "一栋新房子"]]),
+      sentence("Put the chair against the wall.", "把椅子靠墙放。", ["against"], [["Put the chair", "放这个椅子"], ["against the wall", "靠着墙"]]),
+      sentence("The shop is between two banks.", "商店在两家银行之间。", ["between"], [["The shop", "这家商店"], ["is between", "在之间"], ["two banks", "两家银行"]]),
+      sentence("I walk every morning.", "我每天早晨走路。", ["every"], [["I walk", "我走路"], ["every morning", "每天早晨"]]),
+      sentence("Please sit down.", "请坐下。", ["down"], [["Please sit", "请坐"], ["down", "下来"]]),
+      sentence("Our town has a brown bridge.", "我们的小镇有一座棕色的桥。", ["town", "brown"], [["Our town", "我们的小镇"], ["has", "有"], ["a brown bridge", "一座棕色的桥"]]),
+      sentence("The clown wore a gold crown.", "小丑戴着一顶金色的王冠。", ["clown", "crown"], [["The clown", "这个小丑"], ["wore", "戴着"], ["a gold crown", "一顶金色的王冠"]]),
+    ],
+    15: [
+      dailyLine("The young doctor studies bone disease.", ["young", "bone", "disease"]),
+      dailyLine("Many people always arrive early.", ["many", "always"]),
+      dailyLine("I saw three birds.", ["saw", "three"]),
+      dailyLine("She never drinks coffee.", ["never"]),
+      dailyLine("Don is a common name.", ["don"]),
+      dailyLine("Clean air is good for your skin.", ["air", "skin"]),
+      dailyLine("That price is fair.", ["fair"]),
+      dailyLine("Her hair looks lovely.", ["hair"]),
+      dailyLine("I bought a pair of shoes.", ["pair"]),
+      dailyLine("Please sit in this chair.", ["chair"]),
+    ],
+    16: [
+      dailyLine("The United States is a large country.", ["united"]),
+      dailyLine("Draw a round circle.", ["round"]),
+      dailyLine("We found blood on the floor.", ["found", "blood"]),
+      dailyLine("This machine needs more power.", ["power"]),
+      dailyLine("I ate too much.", ["too"]),
+      dailyLine("She met my father.", ["met", "father"]),
+      dailyLine("Both roads might be closed.", ["both", "might"]),
+      dailyLine("Do not be late for the date.", ["late", "date"]),
+      dailyLine("I hate the high tax rate.", ["hate", "rate"]),
+      dailyLine("Each state has a capital.", ["state"]),
+    ],
+    17: [
+      dailyLine("We talked during lunch.", ["during"]),
+      dailyLine("The room is quite warm.", ["quite"]),
+      dailyLine("She turned the door handle.", ["turned", "door"]),
+      dailyLine("I knew the answer.", ["knew"]),
+      dailyLine("The lights suddenly went out.", ["suddenly"]),
+      dailyLine("Please tell me your name.", ["tell", "name"]),
+      dailyLine("He told us the same story.", ["told", "same"]),
+      dailyLine("The game ended early.", ["game"]),
+      dailyLine("She came home smiling.", ["came"]),
+      dailyLine("Whom are you looking for?", ["whom", "looking"]),
+      dailyLine("Do not blame yourself.", ["blame"]),
+    ],
+    18: [
+      dailyLine("This chapter explains the treatment.", ["chapter", "treatment"]),
+      dailyLine("The officer has a calm voice.", ["officer", "voice"]),
+      dailyLine("Write a few words.", ["few", "words"]),
+      dailyLine("Wash your hands.", ["hands"]),
+      dailyLine("These cases took two days.", ["cases", "days"]),
+      dailyLine("She sat among friends.", ["among"]),
+      dailyLine("Please end the meeting now.", ["end"]),
+      dailyLine("Send this letter today.", ["send"]),
+      dailyLine("I spend time with my friend.", ["spend", "friend"]),
+      dailyLine("We rest at the weekend.", ["weekend"]),
+    ],
+    19: [
+      dailyLine("I often read about history.", ["often", "history"]),
+      dailyLine("She gave me a gift.", ["gave"]),
+      dailyLine("The battle ended at noon.", ["battle"]),
+      dailyLine("This case was taken to court.", ["case", "taken"]),
+      dailyLine("Put the cup here.", ["put"]),
+      dailyLine("The new law changed his position.", ["law", "position"]),
+      dailyLine("However, we stayed calm.", ["however"]),
+      dailyLine("Wash your face and hand.", ["and", "hand"]),
+      dailyLine("The plane will land soon.", ["land"]),
+      dailyLine("Please stand up.", ["stand"]),
+      dailyLine("I understand the question.", ["understand"]),
+    ],
+    20: [
+      dailyLine("We will leave soon.", ["soon"]),
+      dailyLine("I understand each question.", ["understand", "each"]),
+      dailyLine("She is known around town.", ["known"]),
+      dailyLine("The soldiers helped others.", ["soldiers", "others"]),
+      dailyLine("Oh, I forgot my bag.", ["oh"]),
+      dailyLine("Children become stronger with practice.", ["become"]),
+      dailyLine("The school is not far.", ["far"]),
+      dailyLine("He brought flowers in a box.", ["brought", "in"]),
+      dailyLine("Our team can win.", ["win"]),
+      dailyLine("Please begin now.", ["begin"]),
+      dailyLine("This cream protects your skin.", ["skin"]),
+      dailyLine("The ice is thin.", ["thin"]),
+    ],
+    21: [
+      dailyLine("Two women joined the course.", ["women", "course"]),
+      dailyLine("The patient saw the result.", ["patient", "result"]),
+      dailyLine("He stood near the door.", ["stood"]),
+      dailyLine("My knee joint hurts.", ["joint"]),
+      dailyLine("Do you need anything?", ["anything"]),
+      dailyLine("Smoke can cause coughing.", ["cause"]),
+      dailyLine("We are going home.", ["going"]),
+      dailyLine("Evidently, it will rain.", ["evidently", "it"]),
+      dailyLine("Please sit here.", ["sit"]),
+      dailyLine("These shoes fit well.", ["fit"]),
+      dailyLine("The ball hit the wall.", ["hit"]),
+      dailyLine("I ate a bit of cake.", ["bit"]),
+    ],
+    22: [
+      dailyLine("The doctor treated the infection.", ["infection"]),
+      dailyLine("This matter needs attention.", ["matter"]),
+      dailyLine("We were given more time.", ["given"]),
+      dailyLine("He prayed to God.", ["god"]),
+      dailyLine("I have a strange feeling.", ["feeling"]),
+      dailyLine("People around the world need peace.", ["world"]),
+      dailyLine("I am certain about the answer.", ["certain"]),
+      dailyLine("The chief stood in front.", ["chief", "front"]),
+      dailyLine("What does this button do?", ["does"]),
+      dailyLine("Put the box on top.", ["top"]),
+      dailyLine("Please stop at the shop.", ["stop", "shop"]),
+      dailyLine("Do not drop the glass.", ["drop"]),
+      dailyLine("The balloon may pop.", ["pop"]),
+    ],
+    23: [
+      dailyLine("Her condition is improving.", ["condition"]),
+      dailyLine("My son made breakfast himself.", ["son"]),
+      dailyLine("She fixed the bike herself.", ["herself"]),
+      dailyLine("Keep an open mind.", ["mind"]),
+      dailyLine("Is it possible to come later?", ["possible", "later"]),
+      dailyLine("He lives alone.", ["alone"]),
+      dailyLine("Exercise helps the body.", ["body"]),
+      dailyLine("The horse walked toward the river.", ["horse", "toward"]),
+      dailyLine("I can see a free seat.", ["see", "free"]),
+      dailyLine("Three birds sat in the tree.", ["three", "tree"]),
+      dailyLine("We agree on the plan.", ["agree"]),
+    ],
+    24: [
+      dailyLine("The shop is almost open.", ["almost", "open"]),
+      dailyLine("Set the alarm for seven.", ["set"]),
+      dailyLine("Wait until tomorrow.", ["until"]),
+      dailyLine("The woman felt nerve pain.", ["woman", "nerve", "pain"]),
+      dailyLine("The boy ran home.", ["ran"]),
+      dailyLine("Please act now.", ["act"]),
+      dailyLine("Her expression changed.", ["expression"]),
+      dailyLine("Put these things away.", ["things"]),
+      dailyLine("The train stopped because of rain.", ["train", "rain"]),
+      dailyLine("This is the main road.", ["main"]),
+      dailyLine("Sleep helps your brain.", ["brain"]),
+    ],
+    25: [
+      dailyLine("Her business became successful.", ["business", "became"]),
+      dailyLine("The officers waited within the building.", ["officers", "within"]),
+      dailyLine("My mother called the commander.", ["mother", "commander"]),
+      dailyLine("This year is going quickly.", ["year"]),
+      dailyLine("They are taking care of themselves.", ["taking", "themselves"]),
+      dailyLine("Clean the wound gently.", ["wound"]),
+      dailyLine("One thing can bring joy.", ["thing", "bring"]),
+      dailyLine("Children sing in a ring.", ["sing", "ring"]),
+      dailyLine("Flowers bloom in spring.", ["spring"]),
+    ],
+    26: [
+      dailyLine("She added one word.", ["added", "word"]),
+      dailyLine("The party ended early.", ["party"]),
+      dailyLine("Put the parts on the table.", ["parts", "table"]),
+      dailyLine("The cat lay by the fire.", ["lay"]),
+      dailyLine("You can find either answer online.", ["find", "either"]),
+      dailyLine("The chair is near the window.", ["near"]),
+      dailyLine("Soft tissues protect the body.", ["tissues"]),
+      dailyLine("I think before I speak.", ["think"]),
+      dailyLine("Please drink more water.", ["drink"]),
+      dailyLine("Open the link.", ["link"]),
+      dailyLine("The pink cup is in the sink.", ["pink", "sink"]),
+    ],
+    27: [
+      dailyLine("I wrote a letter about the project.", ["letter", "project"]),
+      dailyLine("Four people attended the public meeting.", ["four", "public"]),
+      dailyLine("A red car is common here.", ["red", "common"]),
+      dailyLine("She held my hand.", ["held"]),
+      dailyLine("Let us talk about this example.", ["talk", "example"]),
+      dailyLine("The sun sets in the west.", ["west"]),
+      dailyLine("Please come back.", ["back"]),
+      dailyLine("The black dog ran around the track.", ["black", "track"]),
+      dailyLine("Pack a warm coat.", ["pack"]),
+      dailyLine("We lack enough time.", ["lack"]),
+    ],
+    28: [
+      dailyLine("She entered the room and got a seat.", ["entered", "got"]),
+      dailyLine("Neither tea nor coffee is ready.", ["nor"]),
+      dailyLine("I received a second letter.", ["received", "second"]),
+      dailyLine("Five birds land on the roof.", ["five", "land"]),
+      dailyLine("The surface reflects light.", ["surface", "light"]),
+      dailyLine("I cannot stay long.", ["cannot"]),
+      dailyLine("Pick a quick meal.", ["pick", "quick"]),
+      dailyLine("The sick child needs rest.", ["sick"]),
+      dailyLine("Use this stick.", ["stick"]),
+      dailyLine("Do not kick the ball.", ["kick"]),
+    ],
+    29: [
+      dailyLine("The fire went out by itself.", ["fire", "itself"]),
+      dailyLine("The workers formed a union.", ["union"]),
+      dailyLine("I really need twenty minutes.", ["really", "twenty"]),
+      dailyLine("We walked around the park early.", ["around", "early"]),
+      dailyLine("She kept saying hello.", ["saying"]),
+      dailyLine("The cat is sitting by the door.", ["sitting"]),
+      dailyLine("This is the best choice.", ["best"]),
+      dailyLine("The nice shirt has a fair price.", ["nice", "price"]),
+      dailyLine("We ate rice twice today.", ["rice", "twice"]),
+      dailyLine("Put ice in my drink.", ["ice"]),
+    ],
+    30: [
+      dailyLine("Strong bones help horses run.", ["bones", "horses"]),
+      dailyLine("Write your name here.", ["name"]),
+      dailyLine("A political march blocked the road.", ["political", "road"]),
+      dailyLine("We have been friends since school.", ["since"]),
+      dailyLine("They worked together for a thousand days.", ["together", "thousand"]),
+      dailyLine("Cold weather can hurt the heart.", ["cold", "heart"]),
+      dailyLine("Stand by my side.", ["side"]),
+      dailyLine("We ride bikes after work.", ["ride"]),
+      dailyLine("Hide the key inside this box.", ["hide", "inside"]),
+      dailyLine("The river is wide.", ["wide"]),
+    ],
+    31: [
+      dailyLine("It is impossible to lift this with both arms.", ["impossible", "arms"]),
+      dailyLine("The payment is due tomorrow.", ["due"]),
+      dailyLine("Blood vessels form a long line.", ["vessels", "line"]),
+      dailyLine("She moved the chair.", ["moved"]),
+      dailyLine("Water becomes ice when it freezes.", ["becomes"]),
+      dailyLine("A rose can mean love.", ["rose"]),
+      dailyLine("Make a wish.", ["wish"]),
+      dailyLine("These conditions need more care.", ["conditions", "more"]),
+      dailyLine("The store closes before nine.", ["store", "before"]),
+      dailyLine("Four bags are on the floor.", ["four", "floor"]),
+    ],
+    32: [
+      dailyLine("She finished third.", ["third"]),
+      dailyLine("The king met de Gaulle.", ["king", "de"]),
+      dailyLine("Everyone took a short break.", ["everyone", "short"]),
+      dailyLine("I called three times.", ["times"]),
+      dailyLine("The black clouds formed quickly.", ["black", "formed"]),
+      dailyLine("Check the tire pressure.", ["pressure"]),
+      dailyLine("Her hair is long.", ["hair"]),
+      dailyLine("I know a good place.", ["know"]),
+      dailyLine("Please show me the way.", ["show"]),
+      dailyLine("Plants grow slowly.", ["grow"]),
+      dailyLine("Drive slow near school.", ["slow"]),
+      dailyLine("Keep your voice low.", ["low"]),
+    ],
+    33: [
+      dailyLine("The door remained open.", ["remained"]),
+      dailyLine("We are ready to move forward.", ["ready", "forward"]),
+      dailyLine("A hundred students saw the results.", ["hundred", "results"]),
+      dailyLine("Fresh air filled the room.", ["air"]),
+      dailyLine("The military team traveled north.", ["military", "north"]),
+      dailyLine("I made it myself.", ["myself"]),
+      dailyLine("They worked for peace.", ["peace"]),
+      dailyLine("This part is a good start.", ["part", "start"]),
+      dailyLine("Walking helps your heart.", ["heart"]),
+      dailyLine("She is smart and loves art.", ["smart", "art"]),
+    ],
+    34: [
+      dailyLine("Plant growth slowed in winter.", ["growth"]),
+      dailyLine("I tried but got lost.", ["tried", "lost"]),
+      dailyLine("The news surprised everyone.", ["news"]),
+      dailyLine("Can anyone follow these orders?", ["anyone", "orders"]),
+      dailyLine("We walked past the meeting point.", ["past", "point"]),
+      dailyLine("The service runs across town.", ["service", "across"]),
+      dailyLine("My phone played a soft tone.", ["phone", "tone"]),
+      dailyLine("She sat alone on a stone.", ["alone", "stone"]),
+      dailyLine("This is a quiet zone.", ["zone"]),
+    ],
+    35: [
+      dailyLine("Please close the strange box.", ["close", "strange"]),
+      dailyLine("This process takes time.", ["process"]),
+      dailyLine("I would rather stay home.", ["rather"]),
+      dailyLine("That sound lasted ten seconds.", ["sound", "ten"]),
+      dailyLine("Sit beside me.", ["beside"]),
+      dailyLine("We frequently share our opinion.", ["frequently", "opinion"]),
+      dailyLine("Know your true self.", ["self"]),
+      dailyLine("The night sky has little light.", ["night", "light"]),
+      dailyLine("Turn right at the bank.", ["right"]),
+      dailyLine("They might fight again.", ["might", "fight"]),
+    ],
+    36: [
+      dailyLine("Her presence opened new doors.", ["presence", "opened"]),
+      dailyLine("The trade continued till noon.", ["trade", "till"]),
+      dailyLine("The lake is deep.", ["deep"]),
+      dailyLine("Cloud formation takes time.", ["formation"]),
+      dailyLine("The soldier discussed public affairs.", ["soldier", "affairs"]),
+      dailyLine("The operation ended safely.", ["operation"]),
+      dailyLine("Show me the way.", ["show", "way"]),
+      dailyLine("Have a good day.", ["day"]),
+      dailyLine("Please say what you think.", ["say"]),
+      dailyLine("You may pay later.", ["may", "pay"]),
+    ],
+    37: [
+      dailyLine("She repeated the question and stopped.", ["repeated", "stopped"]),
+      dailyLine("You need rest.", ["rest"]),
+      dailyLine("He wished for the following result.", ["wished", "following"]),
+      dailyLine("What happened?", ["happened"]),
+      dailyLine("Perhaps the bus is turning now.", ["perhaps", "turning"]),
+      dailyLine("The colonies grew quickly.", ["colonies"]),
+      dailyLine("Seeing friends made us all happy.", ["seeing", "all"]),
+      dailyLine("Please call me.", ["call"]),
+      dailyLine("Leaves fall near the wall.", ["fall", "wall"]),
+      dailyLine("I have a small bag.", ["small"]),
+    ],
+    38: [
+      dailyLine("These events occur over a short period.", ["events", "occur", "period"]),
+      dailyLine("My neck hurts.", ["neck"]),
+      dailyLine("They were talking quietly.", ["talking"]),
+      dailyLine("Be kind to others.", ["kind"]),
+      dailyLine("The revolution changed history.", ["revolution"]),
+      dailyLine("She is able to help.", ["able"]),
+      dailyLine("What else do you need?", ["else"]),
+      dailyLine("Our team won the game.", ["won"]),
+      dailyLine("Make a plan and take notes.", ["make", "take"]),
+      dailyLine("Wake up and eat cake.", ["wake", "cake"]),
+      dailyLine("Shake the bottle.", ["shake"]),
+    ],
+    39: [
+      dailyLine("This pain is associated with an abscess.", ["associated", "abscess"]),
+      dailyLine("Her German husband led the group.", ["german", "husband", "led"]),
+      dailyLine("Lower prices helped southern towns.", ["lower", "southern"]),
+      dailyLine("The weather was terrible.", ["terrible"]),
+      dailyLine("Drink at least two cups of water.", ["least"]),
+      dailyLine("Lymph moves through the body.", ["lymph"]),
+      dailyLine("The fat cat sat on a hat.", ["fat", "cat", "sat", "hat"]),
+      dailyLine("A bat flew outside.", ["bat"]),
+    ],
+    40: [
+      dailyLine("The new features caught my attention.", ["features", "attention"]),
+      dailyLine("She noticed the reason.", ["noticed", "reason"]),
+      dailyLine("The campaign asked people to return home.", ["campaign", "return"]),
+      dailyLine("A picture hung on the wall.", ["wall"]),
+      dailyLine("It was merely a guess.", ["merely"]),
+      dailyLine("The tumours remained silent.", ["tumours", "silent"]),
+      dailyLine("Tell me when you feel well.", ["tell", "well"]),
+      dailyLine("They sell fresh bread.", ["sell"]),
+      dailyLine("Please spell this word.", ["spell"]),
+      dailyLine("I smell coffee.", ["smell"]),
+    ],
+    41: [
+      dailyLine("She laid the keys by the window.", ["laid", "window"]),
+      dailyLine("It rained; therefore, we stayed home.", ["therefore"]),
+      dailyLine("The nurse cleaned the wounds.", ["wounds"]),
+      dailyLine("A federal officer met each person.", ["federal", "person"]),
+      dailyLine("This pillow feels soft.", ["soft"]),
+      dailyLine("She is speaking about the subject.", ["speaking", "subject"]),
+      dailyLine("We had dinner early.", ["dinner"]),
+      dailyLine("Look at this book.", ["look", "book"]),
+      dailyLine("The cook hung his coat on a hook.", ["cook", "hook"]),
+      dailyLine("He took the bus.", ["took"]),
+    ],
+    42: [
+      dailyLine("It is an honor to meet you.", ["honor"]),
+      dailyLine("Exercise builds strength.", ["strength"]),
+      dailyLine("She is waiting outside.", ["waiting"]),
+      dailyLine("The colonial house is old.", ["colonial"]),
+      dailyLine("He immediately placed the bag down.", ["immediately", "placed"]),
+      dailyLine("The child quickly answered the questions.", ["quickly", "questions"]),
+      dailyLine("We had a conversation in the dark.", ["conversation", "dark"]),
+      dailyLine("I can hear music near the door.", ["hear", "near"]),
+      dailyLine("Dear friends, this year brings hope.", ["dear", "year"]),
+      dailyLine("Courage can overcome fear.", ["fear"]),
+    ],
+    43: [
+      dailyLine("The doctor took several measures.", ["measures"]),
+      dailyLine("The mountain view is beautiful.", ["view"]),
+      dailyLine("What are you doing?", ["doing"]),
+      dailyLine("She removed her usual coat.", ["removed", "usual"]),
+      dailyLine("Check your bank account.", ["account"]),
+      dailyLine("My brother studies civil law.", ["brother", "civil"]),
+      dailyLine("A foreign visitor fell down.", ["foreign", "fell"]),
+      dailyLine("The old room felt cold.", ["old", "cold"]),
+      dailyLine("Hold the box.", ["hold"]),
+      dailyLine("He told us about gold.", ["told", "gold"]),
+    ],
+    44: [
+      dailyLine("The two forces met at dawn.", ["forces"]),
+      dailyLine("She glanced at the clock.", ["glanced"]),
+      dailyLine("We are nearly ready.", ["nearly"]),
+      dailyLine("The Republican won six seats.", ["republican", "six"]),
+      dailyLine("That is enough.", ["enough"]),
+      dailyLine("I feel fine today.", ["fine"]),
+      dailyLine("This character is particularly kind.", ["character", "particularly"]),
+      dailyLine("He closed the door.", ["closed"]),
+      dailyLine("A round drum makes a deep sound.", ["round", "sound"]),
+      dailyLine("We found flowers around the house.", ["found", "around"]),
+      dailyLine("The ball hit the ground.", ["ground"]),
+    ],
+    45: [
+      dailyLine("The patient had severe symptoms.", ["severe", "symptoms"]),
+      dailyLine("I bought a single coat.", ["single", "coat"]),
+      dailyLine("Freedom matters to everyone.", ["freedom"]),
+      dailyLine("Please check both sides.", ["please", "sides"]),
+      dailyLine("Tears filled her eyes.", ["tears"]),
+      dailyLine("Exercise protects your joints and knee.", ["joints", "knee"]),
+      dailyLine("The child sat down.", ["down"]),
+      dailyLine("Our town has a brown bridge.", ["town", "brown"]),
+      dailyLine("The clown wore a crown.", ["clown", "crown"]),
+    ],
+    46: [
+      dailyLine("Take a seat.", ["seat"]),
+      dailyLine("The boy felt acute pain.", ["boy", "acute"]),
+      dailyLine("Snow covered the whole nation.", ["covered", "nation"]),
+      dailyLine("She remarked on changes in society.", ["remarked", "changes", "society"]),
+      dailyLine("Although it rained, we walked.", ["although"]),
+      dailyLine("The artery carries blood.", ["artery"]),
+      dailyLine("Fresh air is good.", ["air"]),
+      dailyLine("The price is fair.", ["fair"]),
+      dailyLine("Her hair looks lovely.", ["hair"]),
+      dailyLine("I bought a pair of shoes.", ["pair"]),
+      dailyLine("Please sit in the chair.", ["chair"]),
+    ],
+    47: [
+      dailyLine("The swelling caused fear.", ["swelling", "fear"]),
+      dailyLine("The girl grew taller.", ["girl", "grew"]),
+      dailyLine("We waited for two hours.", ["hours"]),
+      dailyLine("Please reply in a calm tone.", ["reply", "tone"]),
+      dailyLine("Bring a thin coat.", ["bring", "thin"]),
+      dailyLine("Do not be late.", ["late"]),
+      dailyLine("They chose the same name.", ["same", "name"]),
+      dailyLine("The game came to an end.", ["game", "came"]),
+      dailyLine("Do not blame yourself.", ["blame"]),
+    ],
+    48: [
+      dailyLine("Open your mouth.", ["mouth"]),
+      dailyLine("This area has many friendly faces.", ["area", "faces"]),
+      dailyLine("Be yourself.", ["yourself"]),
+      dailyLine("Remember to keep smiling.", ["remember", "smiling"]),
+      dailyLine("The clinical room needs fresh air.", ["clinical", "fresh"]),
+      dailyLine("Someone visited the village.", ["someone", "village"]),
+      dailyLine("Please end the meeting.", ["end"]),
+      dailyLine("Send this letter.", ["send"]),
+      dailyLine("I spend time with my friend.", ["spend", "friend"]),
+      dailyLine("We rest at the weekend.", ["weekend"]),
+    ],
+    49: [
+      dailyLine("The ulcer caused a sudden attack.", ["ulcer", "attack"]),
+      dailyLine("The meeting lasted one hour.", ["hour"]),
+      dailyLine("Team members repaired the bridge.", ["members", "bridge"]),
+      dailyLine("The company employed my friends.", ["employed", "friends"]),
+      dailyLine("She finally listened carefully.", ["finally", "listened"]),
+      dailyLine("We tried various foods.", ["various"]),
+      dailyLine("Wash your face and hand.", ["and", "hand"]),
+      dailyLine("The plane will land soon.", ["land"]),
+      dailyLine("Please stand here.", ["stand"]),
+      dailyLine("I understand the question.", ["understand"]),
+    ],
+    50: [
+      dailyLine("Exercise takes time.", ["takes"]),
+      dailyLine("I have no doubt.", ["doubt"]),
+      dailyLine("This muscle feels sore.", ["muscle"]),
+      dailyLine("Safety is our primary goal.", ["primary"]),
+      dailyLine("Follow the command.", ["command"]),
+      dailyLine("The convention begins tomorrow.", ["convention"]),
+      dailyLine("She described the plan.", ["described"]),
+      dailyLine("Independence brings freedom.", ["independence"]),
+      dailyLine("Stars appear at night.", ["appear"]),
+      dailyLine("People can change.", ["change"]),
+      dailyLine("The keys are in my bag.", ["in"]),
+      dailyLine("Our team can win.", ["win"]),
+      dailyLine("Please begin now.", ["begin"]),
+      dailyLine("This cream protects your skin.", ["skin"]),
+      dailyLine("The ice is thin.", ["thin"]),
+    ],
+  };
+
+  const dailyAdjectiveWords = new Set([
+    "acute", "bad", "brown", "certain", "civil", "clear", "clinical", "cold", "common", "dark", "different",
+    "due", "early", "enough", "fair", "fat", "federal", "fine", "foreign", "fresh", "general", "german",
+    "glad", "good", "great", "hard", "important", "impossible", "kind", "late", "local", "low", "military",
+    "new", "nice", "old", "political", "possible", "primary", "public", "quick", "ready", "red", "republican",
+    "same", "severe", "short", "silent", "single", "small", "soft", "southern", "strange", "strong", "thin",
+    "united", "usual", "whole", "wounded", "young",
+  ]);
+  const dailyAdverbWords = new Set([
+    "again", "almost", "alone", "around", "away", "down", "else", "evidently", "finally", "forward", "however",
+    "immediately", "later", "merely", "more", "nearly", "never", "not", "often", "only", "out", "particularly",
+    "perhaps", "quite", "rather", "really", "soon", "still", "suddenly", "there", "therefore", "together", "too",
+    "up", "very", "well",
+  ]);
+  const dailyBaseVerbWords = new Set([
+    "act", "appear", "be", "begin", "bring", "buy", "call", "change", "come", "cook", "count", "do", "drink",
+    "eat", "feel", "find", "give", "go", "grow", "have", "hear", "help", "hit", "hold", "know", "learn",
+    "listen", "look", "love", "make", "occur", "open", "pay", "pick", "put", "read", "remember", "reply", "rest",
+    "return", "ride", "say", "see", "sell", "send", "shake", "show", "sing", "sit", "speak", "spell", "spend",
+    "stand", "stop", "take", "talk", "tell", "think", "turn", "understand", "use", "wait", "wake", "win", "wish",
+    "work", "write",
+  ]);
+  const dailyPastVerbWords = new Set([
+    "added", "asked", "became", "began", "brought", "came", "closed", "covered", "crossed", "decided", "described",
+    "did", "employed", "entered", "fell", "formed", "found", "gave", "got", "grew", "had", "happened", "held",
+    "knew", "laid", "led", "left", "listened", "looked", "lost", "made", "met", "moved", "noticed", "opened",
+    "passed", "placed", "received", "remained", "removed", "returned", "rose", "said", "sat", "saw", "sent",
+    "showed", "smiled", "stood", "stopped", "told", "took", "tried", "turned", "understood", "went", "won", "wore",
+  ]);
+  const dailyPluralNouns = new Set([
+    "arms", "bones", "cases", "changes", "children", "colonies", "conditions", "events", "eyes", "faces", "features",
+    "forces", "friends", "hands", "hours", "joints", "measures", "members", "men", "muscles", "officers", "orders",
+    "parts", "people", "questions", "results", "sides", "soldiers", "states", "symptoms", "things", "times", "tissues",
+    "tumours", "vessels", "women", "words", "wounds",
+  ]);
+
+  const dailySpecialSentenceFactories = Object.freeze({
+    and: (word) => sentence("Tea and coffee are ready.", "茶和咖啡准备好了。", [word.english], [["Tea", "茶"], ["and", "和"], ["coffee", "咖啡"], ["are ready", "准备好了"]]),
+    in: (word) => sentence("The keys are in my bag.", "钥匙在我的包里。", [word.english], [["The keys", "这些钥匙"], ["are in", "在里面"], ["my bag", "我的包"]]),
+    it: (word) => sentence("It feels warm.", "它感觉温暖。", [word.english], [["It", "它"], ["feels", "感觉"], ["warm", "温暖"]]),
+    before: (word) => sentence("We arrived before noon.", "我们在中午之前到达。", [word.english], [["We arrived", "我们到达"], ["before noon", "在中午之前"]]),
+    four: (word) => sentence("I need four chairs.", "我需要四把椅子。", [word.english], [["I need", "我需要"], ["four chairs", "四把椅子"]]),
+    part: (word) => sentence("This part needs repair.", "这个部分需要修理。", [word.english], [["This part", "这个部分"], ["needs repair", "需要修理"]]),
+    phone: (word) => sentence("My phone is on the table.", "我的手机在桌子上。", [word.english], [["My phone", "我的手机"], ["is on", "在上面"], ["the table", "桌子"]]),
+    all: (word) => sentence("We are all ready.", "我们都准备好了。", [word.english], [["We are", "我们是"], ["all", "都"], ["ready", "准备好的"]]),
+    day: (word) => sentence("The day begins early.", "这一天很早开始。", [word.english], [["The day", "这一天"], ["begins", "开始"], ["early", "很早"]]),
+    way: (word) => sentence("This way is shorter.", "这条路更短。", [word.english], [["This way", "这条路"], ["is shorter", "更短"]]),
+    may: (word) => sentence("It may rain tonight.", "今晚可能下雨。", [word.english], [["It may rain", "可能下雨"], ["tonight", "今晚"]]),
+    near: (word) => sentence("The shop is near my home.", "商店在我家附近。", [word.english], [["The shop", "这家商店"], ["is near", "在附近"], ["my home", "我的家"]]),
+    dear: (word) => sentence("Dear Mom, I miss you.", "亲爱的妈妈，我想你。", [word.english], [["Dear Mom", "亲爱的妈妈"], ["I", "我"], ["miss you", "想你"]]),
+    fear: (word) => sentence("The child showed no fear.", "这个孩子没有表现出恐惧。", [word.english], [["The child", "这个孩子"], ["showed no fear", "没有表现出恐惧"]]),
+    french: (word) => sentence("She speaks French at work.", "她在工作时说法语。", [word.english], [["She speaks", "她说"], ["French", "法语"], ["at work", "在工作时"]]),
+    german: (word) => sentence("He reads German well.", "他德语读得很好。", [word.english], [["He reads", "他阅读"], ["German", "德语"], ["well", "很好"]]),
+  });
+
+  function dailyEnglishTokens(value) {
+    return (String(value || "").toLowerCase().match(/[a-z]+(?:[-'’][a-z]+)*/g) || [])
+      .map((token) => token.replaceAll("’", "'"));
+  }
+
+  function dailyTargetUsage(items, words) {
+    const counts = new Map(words.map((word) => [String(word.english || "").trim().toLowerCase(), 0]));
+    items.forEach((item) => dailyEnglishTokens(item.english).forEach((token) => {
+      if (counts.has(token)) counts.set(token, counts.get(token) + 1);
+    }));
+    return counts;
+  }
+
+  function validateDailySentenceSet(items, words) {
+    const expected = words.map((word) => String(word.english || "").trim().toLowerCase()).filter(Boolean);
+    if (!items.length || new Set(expected).size !== expected.length) return false;
+    const counts = dailyTargetUsage(items, words);
+    return expected.every((word) => counts.get(word) === 1);
+  }
+
+  function dailyFallbackCandidates(word, seed = 0) {
+    const english = String(word.english || "").trim();
+    const key = english.toLowerCase();
+    const meaning = shortMeaning(word.chinese) || word.chinese;
+    const special = dailySpecialSentenceFactories[key]?.(word);
+    if (special) return [special];
+
+    let candidates;
+    if (dailyAdjectiveWords.has(key)) {
+      candidates = [
+        sentence(`The room feels ${english}.`, `这个房间感觉${meaning}。`, [english], [["The room", "这个房间"], ["feels", "感觉"], [english, meaning]]),
+        sentence(`This looks ${english}.`, `这个看起来${meaning}。`, [english], [["This", "这个"], ["looks", "看起来"], [english, meaning]]),
+        sentence(`The result seems ${english}.`, `这个结果似乎${meaning}。`, [english], [["The result", "这个结果"], ["seems", "似乎"], [english, meaning]]),
+        sentence(`Everything became ${english}.`, `一切变得${meaning}。`, [english], [["Everything", "一切"], ["became", "变得"], [english, meaning]]),
       ];
-    });
+    } else if (dailyAdverbWords.has(key)) {
+      candidates = [
+        sentence(`She spoke ${english}.`, `她说话${meaning}。`, [english], [["She spoke", "她说话"], [english, meaning]]),
+        sentence(`We left ${english}.`, `我们${meaning}离开。`, [english], [["We left", "我们离开"], [english, meaning]]),
+        sentence(`He answered ${english}.`, `他回答得${meaning}。`, [english], [["He answered", "他回答"], [english, meaning]]),
+        sentence(`The bus arrived ${english}.`, `公交车${meaning}到达。`, [english], [["The bus arrived", "公交车到达"], [english, meaning]]),
+      ];
+    } else if (dailyPastVerbWords.has(key)) {
+      candidates = [
+        sentence(`She ${english} it carefully.`, `她小心地${meaning}它。`, [english], [["She", "她"], [english, meaning], ["it carefully", "小心地处理它"]]),
+        sentence(`They ${english} home early.`, `他们很早${meaning}回家。`, [english], [["They", "他们"], [english, meaning], ["home early", "很早回家"]]),
+        sentence(`We ${english} the answer yesterday.`, `我们昨天${meaning}这个答案。`, [english], [["We", "我们"], [english, meaning], ["the answer", "这个答案"], ["yesterday", "昨天"]]),
+      ];
+    } else if (dailyBaseVerbWords.has(key)) {
+      candidates = [
+        sentence(`Please ${english} this carefully.`, `请仔细${meaning}这个。`, [english], [["Please", "请"], [english, meaning], ["this carefully", "仔细处理这个"]]),
+        sentence(`We ${english} together.`, `我们一起${meaning}。`, [english], [["We", "我们"], [english, meaning], ["together", "一起"]]),
+        sentence(`I can ${english} now.`, `我现在可以${meaning}。`, [english], [["I can", "我可以"], [english, meaning], ["now", "现在"]]),
+        sentence(`They ${english} every day.`, `他们每天${meaning}。`, [english], [["They", "他们"], [english, meaning], ["every day", "每天"]]),
+      ];
+    } else if (dailyPluralNouns.has(key) || (/s$/.test(key) && !/ss$/.test(key))) {
+      candidates = [
+        sentence(`The ${english} are nearby.`, `这些${meaning}在附近。`, [english], [[`The ${english}`, `这些${meaning}`], ["are nearby", "在附近"]]),
+        sentence(`I can see the ${english}.`, `我能看见这些${meaning}。`, [english], [["I can see", "我能看见"], [`the ${english}`, `这些${meaning}`]]),
+        sentence(`We talked about ${english}.`, `我们谈论了${meaning}。`, [english], [["We talked about", "我们谈论"], [english, meaning]]),
+        sentence(`She counted the ${english}.`, `她数了这些${meaning}。`, [english], [["She counted", "她数了"], [`the ${english}`, `这些${meaning}`]]),
+      ];
+    } else {
+      candidates = [
+        sentence(`I noticed the ${english}.`, `我注意到了这个${meaning}。`, [english], [["I noticed", "我注意到"], [`the ${english}`, `这个${meaning}`]]),
+        sentence(`We talked about ${english}.`, `我们谈论了${meaning}。`, [english], [["We talked about", "我们谈论"], [english, meaning]]),
+        sentence(`Please check the ${english}.`, `请检查这个${meaning}。`, [english], [["Please check", "请检查"], [`the ${english}`, `这个${meaning}`]]),
+        sentence(`This ${english} looks different.`, `这个${meaning}看起来不同。`, [english], [[`This ${english}`, `这个${meaning}`], ["looks different", "看起来不同"]]),
+      ];
+    }
+    return rotateDailyItems(candidates, seed);
   }
 
-  function dailyPracticeSentence(words, variant = 0) {
-    const englishList = dailyWordListEnglish(words);
-    const chineseList = words.map((word) => shortMeaning(word.chinese) || word.chinese).join("、");
-    const wordParts = dailyWordListBreakdown(words);
-    const focus = words.map((word) => word.english);
-    const patterns = [
-      {
-        english: `Today I am learning ${englishList}.`,
-        chinese: `今天我正在学习${chineseList}。`,
-        breakdown: [["Today", "今天"], ["I", "我"], ["am learning", "正在学习"], ...wordParts],
-      },
-      {
-        english: `We can read ${englishList} aloud.`,
-        chinese: `我们可以大声读出${chineseList}。`,
-        breakdown: [["We", "我们"], ["can read", "可以朗读"], ...wordParts, ["aloud", "大声地"]],
-      },
-      {
-        english: `Please help me remember ${englishList}.`,
-        chinese: `请帮我记住${chineseList}。`,
-        breakdown: [["Please", "请"], ["help me", "帮助我"], ["remember", "记住"], ...wordParts],
-      },
-      {
-        english: `Let us practice ${englishList} together.`,
-        chinese: `让我们一起练习${chineseList}。`,
-        breakdown: [["Let us", "让我们"], ["practice", "练习"], ...wordParts, ["together", "一起"]],
-      },
-      {
-        english: `Now I can say ${englishList}.`,
-        chinese: `现在我会说${chineseList}。`,
-        breakdown: [["Now", "现在"], ["I", "我"], ["can say", "会说"], ...wordParts],
-      },
-      {
-        english: `You can use ${englishList} in a sentence.`,
-        chinese: `你可以在一个句子里使用${chineseList}。`,
-        breakdown: [["You", "你"], ["can use", "可以使用"], ...wordParts, ["in a sentence", "在一个句子里"]],
-      },
-      {
-        english: `${words.length === 1 ? "My new word is" : "My new words are"} ${englishList}.`,
-        chinese: `我的新单词是${chineseList}。`,
-        breakdown: [[words.length === 1 ? "My new word is" : "My new words are", "我的新单词是"], ...wordParts],
-      },
-      {
-        english: `I will review ${englishList} again.`,
-        chinese: `我会再次复习${chineseList}。`,
-        breakdown: [["I", "我"], ["will review", "会复习"], ...wordParts, ["again", "再次"]],
-      },
-    ];
-    const pattern = patterns[((Number(variant) || 0) % patterns.length + patterns.length) % patterns.length];
-    return sentence(pattern.english, pattern.chinese, focus, pattern.breakdown);
+  function dailyNaturalSentence(word, words, seed = 0) {
+    const targetKey = String(word.english || "").trim().toLowerCase();
+    return dailyFallbackCandidates(word, seed).find((candidate) => {
+      const usage = dailyTargetUsage([candidate], words);
+      return usage.get(targetKey) === 1 && [...usage.entries()].every(([key, count]) => key === targetKey || count === 0);
+    }) || null;
   }
+
+  function buildDailySentenceAttempt(day, words, seed = 0) {
+    const preferred = dailyNaturalSentenceLibrary[day] || [
+      ...(weeklySentenceLibrary[Math.ceil(day / 7)] || []),
+      ...sentenceTemplates,
+    ];
+    const selected = [];
+    const covered = new Set();
+    rotateDailyItems(preferred, seed).forEach((item) => {
+      const usage = dailyTargetUsage([item], words);
+      const focus = [...usage.entries()].filter(([, count]) => count === 1).map(([key]) => key);
+      const invalid = [...usage.values()].some((count) => count > 1) || focus.some((key) => covered.has(key));
+      if (!focus.length || invalid) return;
+      selected.push({ ...item, focus });
+      focus.forEach((key) => covered.add(key));
+    });
+
+    rotateDailyItems(words, seed).forEach((word, index) => {
+      const key = String(word.english || "").trim().toLowerCase();
+      if (covered.has(key)) return;
+      const fallback = dailyNaturalSentence(word, words, seed + index);
+      if (!fallback) return;
+      selected.push(fallback);
+      covered.add(key);
+    });
+    return rotateDailyItems(selected, seed);
+  }
+
   function dailySentencesForDay(day, offset = 0) {
     const words = dailyWords(day);
     if (words.length < 2) return [];
-    const rotatedWords = rotateDailyItems(words, offset);
-    const available = new Set(rotatedWords.map((word) => word.english.toLowerCase()));
-    const source = [...(weeklySentenceLibrary[Math.ceil(day / 7)] || []), ...sentenceTemplates];
-    const seen = new Set();
-    const curated = source.reduce((items, item) => {
-      const focus = [...new Set(item.focus.map((word) => word.toLowerCase()))]
-        .filter((word) => available.has(word))
-        .slice(0, 5);
-      const key = item.english.toLowerCase();
-      if (focus.length >= 2 && !seen.has(key)) {
-        seen.add(key);
-        items.push({ ...item, focus });
-      }
-      return items;
-    }, []);
-
-    const selected = [];
-    const covered = new Set();
-    const remainingCurated = rotateDailyItems(curated, offset);
-    while (selected.length < 3) {
-      let bestIndex = -1;
-      let bestCoverage = 1;
-      remainingCurated.forEach((item, index) => {
-        const focus = item.focus.map((word) => word.toLowerCase());
-        if (focus.some((word) => covered.has(word))) return;
-        if (focus.length > bestCoverage) {
-          bestIndex = index;
-          bestCoverage = focus.length;
-        }
-      });
-      if (bestIndex < 0) break;
-      const [best] = remainingCurated.splice(bestIndex, 1);
-      selected.push(best);
-      best.focus.forEach((word) => covered.add(word.toLowerCase()));
+    for (let attempt = 0; attempt < 24; attempt += 1) {
+      const items = buildDailySentenceAttempt(day, words, Number(offset || 0) + attempt);
+      if (validateDailySentenceSet(items, words)) return items;
     }
-
-    const unusedWords = rotatedWords.filter((word) => !covered.has(word.english.toLowerCase()));
-    const desiredTotal = Math.min(7, Math.max(1, Math.ceil(words.length / 2)));
-    const groupCount = Math.min(
-      Math.max(0, desiredTotal - selected.length),
-      Math.ceil(unusedWords.length / 2),
-    );
-    const fallback = [];
-    let cursor = 0;
-    for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
-      const groupsLeft = groupCount - groupIndex;
-      const wordsLeft = unusedWords.length - cursor;
-      const groupSize = Math.min(3, Math.ceil(wordsLeft / groupsLeft));
-      const group = unusedWords.slice(cursor, cursor + groupSize);
-      cursor += groupSize;
-      if (group.length) fallback.push(dailyPracticeSentence(group, Number(offset || 0) + selected.length + groupIndex));
-    }
-    return [...selected, ...fallback];
+    console.warn(`Day ${day} sentence generation failed exact target-word validation.`);
+    return [];
   }
   function dailyFocusWords(item, day) {
     const available = new Map(dailyWords(day).map((word) => [word.english.toLowerCase(), word]));
@@ -1610,23 +2286,24 @@
       const focus = item.focus.filter((word) => available.has(word.toLowerCase()));
       return focus.length >= 2 && focus.length === item.focus.length;
     });
-    const fallback = [];
-    const usedPairs = new Set();
-    for (let index = 0; index < words.length && fallback.length < 8; index += 2) {
-      const first = words[index % words.length];
-      const second = words[(index + 1) % words.length];
-      if (!first || !second || first.english.toLowerCase() === second.english.toLowerCase()) continue;
-      const key = `${first.english.toLowerCase()}:${second.english.toLowerCase()}`;
-      if (usedPairs.has(key)) continue;
-      usedPairs.add(key);
-      fallback.push(sentence(
-        `Today I am learning “${first.english}” and “${second.english}”.`,
-        `我今天在学习“${shortMeaning(first.chinese) || first.chinese}”和“${shortMeaning(second.chinese) || second.chinese}”这两个词。`,
-        [first.english, second.english],
-        [],
-      ));
+    const range = weekRange(week);
+    const natural = [];
+    for (let day = range.start; day <= range.end; day += 1) {
+      (dailyNaturalSentenceLibrary[day] || []).forEach((item) => {
+        const focus = item.focus.filter((word) => available.has(word.toLowerCase()));
+        if (focus.length && focus.length === item.focus.length) natural.push(item);
+      });
     }
-    const candidates = curated.length >= 4 ? curated : [...curated, ...fallback];
+    const generated = rotateDailyItems(words, offset)
+      .map((word, index) => dailyNaturalSentence(word, words, Number(offset || 0) + index))
+      .filter(Boolean);
+    const seen = new Set();
+    const candidates = [...curated, ...natural, ...generated].filter((item) => {
+      const key = item.english.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     const amount = Math.min(8, candidates.length);
     const start = candidates.length ? Number(offset || 0) % candidates.length : 0;
     return Array.from({ length: amount }, (_, index) => candidates[(start + index) % candidates.length]);
