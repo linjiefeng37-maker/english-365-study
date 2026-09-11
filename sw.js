@@ -1,11 +1,11 @@
-const CACHE_NAME = "english365-pwa-v10";
+const CACHE_NAME = "english365-pwa-v11";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=shadowing-20",
   "./data.js",
   "./vocabulary-days-4-50.js?v=desktop-day8-50-11",
-  "./app.js?v=daily-play-once-23",
+  "./app.js?v=cache-network-first-24",
   "./manifest.webmanifest",
   "./icon-180.png",
   "./icon-192.png",
@@ -23,6 +23,8 @@ self.addEventListener("activate", (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((key) => key.startsWith("english365-") && key !== CACHE_NAME).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: "window" }))
+      .then((clients) => Promise.all(clients.map((client) => client.navigate(client.url))))
   );
 });
 
@@ -49,17 +51,14 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request, { ignoreSearch: true }))
   );
 });
