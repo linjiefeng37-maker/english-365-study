@@ -1,11 +1,11 @@
-const CACHE_NAME = "english365-pwa-v12";
+const CACHE_NAME = "english365-pwa-v13";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=shadowing-20",
   "./data.js",
   "./vocabulary-days-4-50.js?v=desktop-day8-50-11",
-  "./app.js?v=daily-sentence-exact-25",
+  "./app.js?v=mobile-open-fix-26",
   "./manifest.webmanifest",
   "./icon-180.png",
   "./icon-192.png",
@@ -23,8 +23,6 @@ self.addEventListener("activate", (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((key) => key.startsWith("english365-") && key !== CACHE_NAME).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: "window" }))
-      .then((clients) => Promise.all(clients.map((client) => client.navigate(client.url))))
   );
 });
 

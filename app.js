@@ -257,15 +257,9 @@
       if (choice?.outcome !== "accepted") showInstallHelp();
     });
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
-      let refreshingForUpdate = false;
-      window.navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (refreshingForUpdate) return;
-        refreshingForUpdate = true;
-        window.location.reload();
-      });
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=daily-sentence-exact-25", { updateViaCache: "none" })
+          .register("./sw.js?v=mobile-open-fix-26", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
