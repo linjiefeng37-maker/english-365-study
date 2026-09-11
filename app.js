@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=three-learning-groups-34", { updateViaCache: "none" })
+          .register("./sw.js?v=natural-short-sentences-35", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1376,13 +1376,65 @@
     return meanings;
   }
 
+  const sentenceContextPhrases = Object.freeze({
+    "all day": "一整天",
+    "all year": "整年",
+    "at home": "在家",
+    "at night": "在晚上",
+    "by email": "用邮件",
+    "by hand": "用手",
+    "by phone": "用电话",
+    "by the wall": "在墙边",
+    "can help": "可以帮忙",
+    "can hear": "能听见",
+    "call me": "给我打电话",
+    "come in": "进来",
+    "come near": "靠近",
+    "feel fear": "感到害怕",
+    "for free": "免费",
+    "got a shot": "打了一针",
+    "go out": "出去",
+    "in class": "在上课",
+    "in the book": "在书里",
+    "in the day": "在白天",
+    "like to play": "喜欢玩",
+    "look around": "四处看看",
+    "look at": "看",
+    "look down": "向下看",
+    "look up": "向上看",
+    "near the kitchen": "在厨房附近",
+    "new year": "新年",
+    "not bad": "不差",
+    "on the beach": "在海滩上",
+    "on the ground": "在地上",
+    "on time": "准时",
+    "pay now": "现在付款",
+    "sit down": "坐下",
+    "take your time": "慢慢来",
+    "the bathroom floor": "浴室地板",
+    "very well": "很好地",
+    "with my eyes": "用我的眼睛",
+  });
+
+  const sentenceInfinitiveVerbs = new Set([
+    "buy", "come", "drink", "eat", "enter", "finish", "go", "help", "learn", "leave", "listen", "pay", "play",
+    "read", "rest", "sell", "sleep", "speak", "start", "wait", "wake", "work", "write",
+  ]);
+
   function sentenceTokenMeaning(token, index, tokens, meanings) {
     const key = String(token || "").toLowerCase();
     const previous = String(tokens[index - 1] || "").toLowerCase();
     const next = String(tokens[index + 1] || "").toLowerCase();
     if (key === "left") return previous === "turn" ? "向左" : "离开了";
+    if (key === "right") return ["go", "turn"].includes(previous) ? "向右" : "正确的";
+    if (key === "on" && ["is", "are", "was", "were"].includes(previous) && next !== "the") return "开着";
+    if (key === "off" && ["is", "are", "was", "were"].includes(previous)) return "关着";
+    if (key === "light" && tokens.includes("off")) return "灯";
+    if (key === "fair" && tokens.includes("hair")) return "浅色的";
+    if (key === "over" && ["is", "was"].includes(previous)) return "结束了";
     if (key === "to") {
-      if (["learn", "wait", "change", "listen", "speak"].includes(next)) return "去";
+      if (sentenceInfinitiveVerbs.has(next)) return ["want", "like", "need"].includes(previous) ? "去" : "为了";
+      if (["me", "him", "her", "them", "you"].includes(next)) return "给";
       if (["school", "city", "village", "the"].includes(next) || ["go", "returned"].includes(previous)) return "到";
     }
     if (key === "with" && previous === "help") return "关于";
@@ -1392,10 +1444,43 @@
   function sentenceOrderSegments(item, scopeWords = []) {
     const tokens = String(item.english || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*|\d+(?:\.\d+)?/g) || [];
     const meanings = sentenceMeaningMap(scopeWords);
-    return tokens.map((english, index) => ({
-      english,
-      chinese: sentenceTokenMeaning(english, index, tokens, meanings),
-    }));
+    if (Array.isArray(item.breakdown) && item.breakdown.length) {
+      return item.breakdown
+        .filter((part) => Array.isArray(part) && part[0] && part[1])
+        .map(([english, chinese]) => ({ english: String(english), chinese: String(chinese) }));
+    }
+    const segments = [];
+    for (let index = 0; index < tokens.length;) {
+      const lower = tokens.map((token) => token.toLowerCase());
+      const threeWord = lower.slice(index, index + 3).join(" ");
+      const twoWord = lower.slice(index, index + 2).join(" ");
+      const phrase = sentenceContextPhrases[threeWord] ? threeWord : sentenceContextPhrases[twoWord] ? twoWord : "";
+      if (phrase) {
+        const size = phrase.split(" ").length;
+        segments.push({ english: tokens.slice(index, index + size).join(" "), chinese: sentenceContextPhrases[phrase] });
+        index += size;
+        continue;
+      }
+      if (lower[index] === "how" && lower[index + 1] === "to" && sentenceInfinitiveVerbs.has(lower[index + 2])) {
+        const verb = lower[index + 2];
+        segments.push({ english: tokens.slice(index, index + 3).join(" "), chinese: `如何${sentenceTokenMeaning(verb, index + 2, lower, meanings)}` });
+        index += 3;
+        continue;
+      }
+      if (lower[index] === "to" && sentenceInfinitiveVerbs.has(lower[index + 1])) {
+        const verb = lower[index + 1];
+        const prefix = ["want", "like", "need"].includes(lower[index - 1]) ? "去" : "为了";
+        segments.push({ english: tokens.slice(index, index + 2).join(" "), chinese: `${prefix}${sentenceTokenMeaning(verb, index + 1, lower, meanings)}` });
+        index += 2;
+        continue;
+      }
+      segments.push({
+        english: tokens[index],
+        chinese: sentenceTokenMeaning(tokens[index], index, lower, meanings),
+      });
+      index += 1;
+    }
+    return segments;
   }
 
   function sentenceSpeechSegments(item, displaySegments) {
@@ -1451,7 +1536,7 @@
       offset: state.sentenceOffset,
       englishOnly: false,
     });
-    $("#sentenceSummary").textContent = `Day ${day} · ${dayTotal}/15 个词 · 当天单词互相组合，旧词只用来帮助自然表达`;
+    $("#sentenceSummary").textContent = `Day ${day} · 自然优先 · 每句 1～3 个重点词 · 只用已学词`;
     $("#playAllSentences").disabled = items.length === 0;
     $("#refreshSentences").disabled = items.length < 2;
   }
@@ -1467,7 +1552,7 @@
   }
 
   function dailyLine(english, focus) {
-    return sentence(english, "", focus, []);
+    return { ...sentence(english, "", focus, []), reviewedNatural: true };
   }
 
   const dailyNaturalSentenceLibrary = {
@@ -2136,199 +2221,282 @@
       dailyLine("The man and I could go out.", ["man", "could", "out"]),
       dailyLine("Would you help me?", ["would", "me"]),
       dailyLine("I only did the work.", ["only", "did"]),
-      dailyLine("The cat has its food.", ["cat", "has", "its"]),
-      dailyLine("The bat sat on the hat.", ["bat", "sat", "hat"]),
-      dailyLine("I eat more fat.", ["more", "fat"]),
+      dailyLine("The cat is fat.", ["cat", "fat"]),
+      dailyLine("It has its food.", ["has", "its"]),
+      dailyLine("I see a bat.", ["bat"]),
+      dailyLine("He sat at home.", ["sat"]),
+      dailyLine("This hat is good.", ["hat"]),
+      dailyLine("I want more food.", ["more"]),
     ],
     9: [
-      dailyLine("Tell me about your new phone.", ["tell", "about", "your", "new"]),
-      dailyLine("How should I spell these?", ["how", "should", "spell", "these"]),
+      dailyLine("Tell me about your phone.", ["tell", "about", "your"]),
+      dailyLine("How should I spell it?", ["how", "should", "spell"]),
+      dailyLine("These are new.", ["these", "new"]),
       dailyLine("I can smell it very well.", ["smell", "very", "well"]),
       dailyLine("Sell it before work.", ["sell", "before"]),
-      dailyLine("Such a good day is over.", ["such", "over"]),
+      dailyLine("The day is over.", ["over"]),
     ],
     10: [
-      dailyLine("Two men are down.", ["two", "men", "down"]),
+      dailyLine("Two men sat down.", ["two", "men", "down"]),
       dailyLine("Look at his face.", ["look", "face"]),
-      dailyLine("He did it himself first.", ["himself", "first"]),
-      dailyLine("French is in the book.", ["french", "book"]),
-      dailyLine("Our cook took the same hat.", ["our", "cook", "took", "same"]),
-      dailyLine("The hat is upon the hook.", ["upon", "hook"]),
+      dailyLine("He did it himself.", ["himself"]),
+      dailyLine("I go first.", ["first"]),
+      dailyLine("I read French.", ["french"]),
+      dailyLine("Our cook took it.", ["our", "cook", "took"]),
+      dailyLine("Read the book.", ["book"]),
+      dailyLine("It is the same.", ["same"]),
+      dailyLine("The hat is on the hook.", ["hook"]),
     ],
     11: [
       dailyLine("The bear came into the room.", ["bear", "came", "room"]),
-      dailyLine("Dear friend, come near.", ["dear", "near"]),
-      dailyLine("Look with your eyes and listen with your ear.", ["eyes", "ear"]),
-      dailyLine("Where are the states?", ["where", "states"]),
-      dailyLine("You must look under it, even now.", ["must", "under", "even"]),
-      dailyLine("This year, I still feel fear.", ["year", "still", "fear"]),
+      dailyLine("Come near me.", ["near"]),
+      dailyLine("Dear friend, I can help.", ["dear"]),
+      dailyLine("I can see with my eyes.", ["eyes"]),
+      dailyLine("This is my ear.", ["ear"]),
+      dailyLine("Where is home?", ["where"]),
+      dailyLine("I know these states.", ["states"]),
+      dailyLine("You must look under it.", ["must", "under"]),
+      dailyLine("This year is good.", ["year"]),
+      dailyLine("I still want more.", ["still"]),
+      dailyLine("Even I feel fear.", ["even", "fear"]),
     ],
     12: [
-      dailyLine("Open and close the bedroom door.", ["open", "close", "bedroom", "door"]),
-      dailyLine("The bathroom floor is in this room.", ["bathroom", "floor", "room"]),
+      dailyLine("Open the bedroom door.", ["open", "bedroom", "door"]),
+      dailyLine("You can close it.", ["close"]),
+      dailyLine("Look at the bathroom floor.", ["bathroom", "floor"]),
+      dailyLine("I like this room.", ["room"]),
       dailyLine("You may enter this way.", ["may", "enter", "way"]),
       dailyLine("Say it before you leave.", ["say", "leave"]),
-      dailyLine("I pay to play all day.", ["pay", "play", "day"]),
+      dailyLine("I play all day.", ["play", "day"]),
+      dailyLine("I pay now.", ["pay"]),
     ],
     13: [
       dailyLine("The lamp is on the table.", ["lamp", "on", "table"]),
-      dailyLine("The chair and sofa are by the wall.", ["chair", "sofa", "wall"]),
+      dailyLine("The chair is by the wall.", ["chair", "wall"]),
+      dailyLine("I like the sofa.", ["sofa"]),
       dailyLine("The light is off at night.", ["light", "off", "night"]),
-      dailyLine("Come in, write, and go out.", ["in", "write", "out"]),
-      dailyLine("You might be right, but do not fight.", ["might", "right", "fight"]),
+      dailyLine("Write in the book.", ["write", "in"]),
+      dailyLine("Go out now.", ["out"]),
+      dailyLine("You might be right.", ["might", "right"]),
+      dailyLine("Do not fight.", ["fight"]),
     ],
     14: [
-      dailyLine("The key is near the kitchen window.", ["key", "near", "kitchen", "window"]),
-      dailyLine("The bed is in the clean house.", ["bed", "clean", "house"]),
+      dailyLine("The key is near the kitchen.", ["key", "near", "kitchen"]),
+      dailyLine("The window is open.", ["window"]),
+      dailyLine("The bed is clean.", ["bed", "clean"]),
+      dailyLine("The house was dirty.", ["house", "dirty"]),
       dailyLine("Look up and down.", ["up", "down"]),
-      dailyLine("I can hear you here.", ["hear", "here"]),
-      dailyLine("Dear friend, have no fear.", ["dear", "fear"]),
-      dailyLine("It was dirty all year.", ["dirty", "year"]),
+      dailyLine("I can hear you.", ["hear"]),
+      dailyLine("Come here now.", ["here"]),
+      dailyLine("Dear friend, I can help.", ["dear"]),
+      dailyLine("I feel fear.", ["fear"]),
+      dailyLine("This year is good.", ["year"]),
     ],
     15: [
       dailyLine("I eat rice with meat.", ["rice", "meat"]),
-      dailyLine("Cold ice can help in the heat.", ["cold", "ice", "heat"]),
+      dailyLine("The ice is cold.", ["ice", "cold"]),
+      dailyLine("I feel the heat.", ["heat"]),
       dailyLine("Hot food can make me full.", ["hot", "food", "full"]),
-      dailyLine("I see an empty room.", ["see", "empty"]),
-      dailyLine("A bee is on the tree by the sea.", ["bee", "tree", "sea"]),
-      dailyLine("I can take three for free.", ["three", "free"]),
+      dailyLine("The room is empty.", ["empty"]),
+      dailyLine("The bee is by the tree.", ["bee", "tree"]),
+      dailyLine("I can see the sea.", ["see", "sea"]),
+      dailyLine("I want three.", ["three"]),
+      dailyLine("It is free.", ["free"]),
     ],
     16: [
       dailyLine("I drink water by the lake.", ["water", "lake"]),
       dailyLine("I eat bread, egg and fish.", ["bread", "egg", "fish"]),
-      dailyLine("I want more before work and less after.", ["more", "before", "less", "after"]),
-      dailyLine("Wake and make a cake.", ["wake", "make", "cake"]),
+      dailyLine("I eat more before work.", ["more", "before"]),
+      dailyLine("I eat less after work.", ["less", "after"]),
+      dailyLine("Wake up now.", ["wake"]),
+      dailyLine("I can make a cake.", ["make", "cake"]),
       dailyLine("Take the milk and shake it.", ["take", "milk", "shake"]),
     ],
     17: [
-      dailyLine("I eat chicken, fruit and a vegetable.", ["eat", "chicken", "fruit", "vegetable"]),
+      dailyLine("I eat chicken and fruit.", ["eat", "chicken", "fruit"]),
+      dailyLine("This vegetable is good.", ["vegetable"]),
       dailyLine("I drink water from a clean cup.", ["drink", "clean", "cup"]),
       dailyLine("The dirty plate may fall.", ["dirty", "plate", "fall"]),
-      dailyLine("Call me when all are home.", ["call", "all"]),
+      dailyLine("You can call me.", ["call"]),
+      dailyLine("We are all at home.", ["all"]),
       dailyLine("The small ball is by the wall.", ["small", "ball", "wall"]),
     ],
     18: [
       dailyLine("The shower and toilet are clean.", ["shower", "toilet", "clean"]),
       dailyLine("The sink is dirty but dry.", ["sink", "dirty", "dry"]),
-      dailyLine("The old mirror is cold.", ["old", "mirror", "cold"]),
+      dailyLine("The mirror is old.", ["mirror", "old"]),
+      dailyLine("The water is cold.", ["cold"]),
       dailyLine("Hold the wet towel.", ["hold", "wet", "towel"]),
-      dailyLine("He told me they sold the gold.", ["told", "sold", "gold"]),
+      dailyLine("He told me about the gold.", ["told", "gold"]),
+      dailyLine("They sold it.", ["sold"]),
     ],
     19: [
       dailyLine("I use soap, a toothbrush and toothpaste.", ["soap", "toothbrush", "toothpaste"]),
       dailyLine("Hot water is good for my face.", ["hot", "face"]),
-      dailyLine("The light is on or off.", ["on", "off"]),
-      dailyLine("The rain is cold.", ["rain", "cold"]),
-      dailyLine("This is the main train.", ["main", "train"]),
-      dailyLine("Pain is in the brain.", ["pain", "brain"]),
-      dailyLine("The chain is in her hair.", ["chain", "hair"]),
+      dailyLine("The light is on.", ["on"]),
+      dailyLine("The light is off.", ["off"]),
+      dailyLine("I feel the cold rain.", ["rain", "cold"]),
+      dailyLine("The train is here.", ["train"]),
+      dailyLine("I feel pain.", ["pain"]),
+      dailyLine("The chain is gold.", ["chain"]),
+      dailyLine("I like her hair.", ["hair"]),
     ],
     20: [
-      dailyLine("The clothes are by the trash.", ["clothes", "trash"]),
-      dailyLine("Open the basket by hand and take the brush.", ["open", "basket", "hand", "brush"]),
-      dailyLine("Close the book after you look at it.", ["close", "book", "after", "look"]),
-      dailyLine("The cook took the hook.", ["cook", "took", "hook"]),
-      dailyLine("She shook with fear before work.", ["shook", "before"]),
+      dailyLine("The clothes are clean.", ["clothes"]),
+      dailyLine("The trash is here.", ["trash"]),
+      dailyLine("Open the basket.", ["open", "basket"]),
+      dailyLine("Give me your hand.", ["hand"]),
+      dailyLine("Take the brush.", ["brush"]),
+      dailyLine("Close the book.", ["close", "book"]),
+      dailyLine("I work after school.", ["after"]),
+      dailyLine("Look at it.", ["look"]),
+      dailyLine("The cook is at work.", ["cook"]),
+      dailyLine("I took it.", ["took"]),
+      dailyLine("The hook is on the wall.", ["hook"]),
+      dailyLine("She shook with fear.", ["shook"]),
+      dailyLine("I eat before work.", ["before"]),
     ],
     21: [
-      dailyLine("The teacher and student are in class.", ["teacher", "student", "class"]),
+      dailyLine("The teacher is in class.", ["teacher", "class"]),
+      dailyLine("The student can learn.", ["student"]),
       dailyLine("Read and write in the book.", ["read", "write", "book"]),
-      dailyLine("Ask me and answer me.", ["ask", "answer"]),
-      dailyLine("Tell me how to spell it well.", ["tell", "spell", "well"]),
+      dailyLine("You can ask me.", ["ask"]),
+      dailyLine("I can answer.", ["answer"]),
+      dailyLine("Tell me how to spell it.", ["tell", "spell"]),
+      dailyLine("I am well.", ["well"]),
       dailyLine("They sell food at school.", ["sell", "school"]),
-      dailyLine("The bell is in the kitchen, and I smell food.", ["bell", "smell"]),
+      dailyLine("I hear the bell.", ["bell"]),
+      dailyLine("I smell the food.", ["smell"]),
     ],
     22: [
-      dailyLine("The pen and pencil are on the desk.", ["pen", "pencil", "desk"]),
-      dailyLine("Write on the paper in your notebook.", ["paper", "notebook"]),
-      dailyLine("Speak and listen, so we can grow.", ["speak", "listen", "so", "grow"]),
-      dailyLine("No, start now, finish, and go.", ["no", "start", "finish", "go"]),
+      dailyLine("The pen is on the desk.", ["pen", "desk"]),
+      dailyLine("Use a pencil.", ["pencil"]),
+      dailyLine("Write on the paper.", ["paper"]),
+      dailyLine("Write in your notebook.", ["notebook"]),
+      dailyLine("Speak and listen.", ["speak", "listen"]),
+      dailyLine("I am hungry, so I eat.", ["so"]),
+      dailyLine("We can grow.", ["grow"]),
+      dailyLine("We can start.", ["start"]),
+      dailyLine("No, finish now.", ["no", "finish"]),
+      dailyLine("I can go.", ["go"]),
       dailyLine("Show what you know.", ["show", "know"]),
     ],
     23: [
-      dailyLine("The lesson has a word and a sentence.", ["lesson", "word", "sentence"]),
+      dailyLine("This word is in the lesson.", ["lesson", "word"]),
+      dailyLine("Read the sentence.", ["sentence"]),
       dailyLine("This is the right answer.", ["right", "answer"]),
       dailyLine("It is easy to be wrong.", ["easy", "wrong"]),
-      dailyLine("Look down at the hard question.", ["down", "hard", "question"]),
-      dailyLine("The clown has a crown.", ["clown", "crown"]),
-      dailyLine("The brown gown is in town.", ["brown", "gown", "town"]),
+      dailyLine("Look down now.", ["down"]),
+      dailyLine("This question is hard.", ["question", "hard"]),
+      dailyLine("I see a clown.", ["clown"]),
+      dailyLine("The crown is gold.", ["crown"]),
+      dailyLine("I like the brown gown.", ["brown", "gown"]),
+      dailyLine("I work in town.", ["town"]),
     ],
     24: [
-      dailyLine("I have a job and work in an office.", ["job", "work", "office"]),
+      dailyLine("I have a job.", ["job"]),
+      dailyLine("I work in an office.", ["work", "office"]),
       dailyLine("The computer is on the desk.", ["computer", "desk"]),
       dailyLine("Start now and finish on time.", ["start", "finish"]),
-      dailyLine("Send it and receive an answer.", ["send", "receive"]),
-      dailyLine("Her hair is fair.", ["hair", "fair"]),
-      dailyLine("The pair is on the chair.", ["pair", "chair"]),
-      dailyLine("The air is cold by the stair.", ["air", "stair"]),
+      dailyLine("Send it now.", ["send"]),
+      dailyLine("I can receive it.", ["receive"]),
+      dailyLine("She has fair hair.", ["hair", "fair"]),
+      dailyLine("I have a pair.", ["pair"]),
+      dailyLine("I like this chair.", ["chair"]),
+      dailyLine("The air is cold.", ["air"]),
+      dailyLine("This stair is bad.", ["stair"]),
     ],
     25: [
       dailyLine("The boss did not blame the team.", ["boss", "blame", "team"]),
-      dailyLine("Ask by phone and answer by email.", ["ask", "phone", "answer", "email"]),
+      dailyLine("Ask by phone.", ["ask", "phone"]),
+      dailyLine("Answer by email.", ["answer", "email"]),
       dailyLine("The meeting is early, not late.", ["meeting", "early", "late"]),
       dailyLine("They came to the same game.", ["came", "same", "game"]),
       dailyLine("The name is on the frame.", ["name", "frame"]),
     ],
     26: [
-      dailyLine("The file and document are for the project.", ["file", "document", "project"]),
-      dailyLine("Work fast, but take your time to rest.", ["work", "fast", "time", "rest"]),
-      dailyLine("Take a break; do not blame me.", ["break", "blame"]),
-      dailyLine("The slow game has a name.", ["slow", "game", "name"]),
-      dailyLine("They came with the same frame.", ["came", "same", "frame"]),
+      dailyLine("The file is for the project.", ["file", "project"]),
+      dailyLine("Read the document.", ["document"]),
+      dailyLine("Work fast and rest.", ["work", "fast", "rest"]),
+      dailyLine("Take your time.", ["time"]),
+      dailyLine("Take a break.", ["break"]),
+      dailyLine("Do not blame me.", ["blame"]),
+      dailyLine("The game is slow.", ["game", "slow"]),
+      dailyLine("Say the name.", ["name"]),
+      dailyLine("They came with me.", ["came"]),
+      dailyLine("Use the same frame.", ["same", "frame"]),
     ],
     27: [
-      dailyLine("The bus and car are on the road.", ["bus", "car", "road"]),
+      dailyLine("The bus is on the road.", ["bus", "road"]),
+      dailyLine("The car is here.", ["car"]),
       dailyLine("Come by train and arrive on time.", ["come", "train", "arrive"]),
       dailyLine("Go home when you leave.", ["go", "leave"]),
       dailyLine("Send it to a friend.", ["send", "friend"]),
       dailyLine("Spend the weekend at home.", ["spend", "weekend"]),
-      dailyLine("The street can bend at the end.", ["street", "bend", "end"]),
+      dailyLine("The street has a bend.", ["street", "bend"]),
+      dailyLine("This is the end.", ["end"]),
     ],
     28: [
-      dailyLine("Take a taxi from the station to the airport.", ["taxi", "station", "airport"]),
+      dailyLine("Take a taxi to the station.", ["taxi", "station"]),
+      dailyLine("Go to the airport.", ["airport"]),
       dailyLine("The ticket is on the seat.", ["ticket", "seat"]),
       dailyLine("Go left or right.", ["left", "right"]),
       dailyLine("It is near, not far.", ["near", "far"]),
-      dailyLine("Give me your hand and stand.", ["hand", "stand"]),
-      dailyLine("The band is on the sand.", ["band", "sand"]),
-      dailyLine("This land is grand.", ["land", "grand"]),
+      dailyLine("Give me your hand.", ["hand"]),
+      dailyLine("You can stand.", ["stand"]),
+      dailyLine("I like this band.", ["band"]),
+      dailyLine("The sand is hot.", ["sand"]),
+      dailyLine("This is our land.", ["land"]),
     ],
     29: [
-      dailyLine("Take the map and bag.", ["map", "bag"]),
+      dailyLine("Take the map and the bag.", ["map", "bag"]),
       dailyLine("Stop at the hotel on your trip.", ["stop", "hotel", "trip"]),
       dailyLine("Go fast, not slow.", ["fast", "slow"]),
       dailyLine("Come in and go out.", ["in", "out"]),
-      dailyLine("Sit a bit if it can fit.", ["sit", "bit", "it", "fit"]),
-      dailyLine("I quit before the hit.", ["quit", "hit"]),
+      dailyLine("Sit a bit.", ["sit", "bit"]),
+      dailyLine("It can fit.", ["it", "fit"]),
+      dailyLine("I can hit the ball.", ["hit"]),
+      dailyLine("I can quit now.", ["quit"]),
     ],
     30: [
-      dailyLine("The shop and store are by the market.", ["shop", "store", "market"]),
+      dailyLine("The shop is by the market.", ["shop", "market"]),
+      dailyLine("This store is open.", ["store"]),
       dailyLine("I need money to pay the price.", ["money", "price"]),
       dailyLine("Buy and sell food.", ["buy", "sell"]),
       dailyLine("Give it to me.", ["give", "it"]),
-      dailyLine("If the hat can fit, take this.", ["fit", "take"]),
+      dailyLine("The hat can fit.", ["fit"]),
+      dailyLine("You can take this.", ["take"]),
       dailyLine("Sit for a bit.", ["sit", "bit"]),
-      dailyLine("Hit the ball and quit.", ["hit", "quit"]),
+      dailyLine("I can hit the ball.", ["hit"]),
+      dailyLine("I can quit now.", ["quit"]),
     ],
     31: [
       dailyLine("Pay with cash or card.", ["cash", "card"]),
-      dailyLine("The bag has a good size and color.", ["bag", "size", "color"]),
+      dailyLine("The bag is a good size.", ["bag", "size"]),
+      dailyLine("I like this color.", ["color"]),
       dailyLine("This is cheap; that is expensive.", ["cheap", "expensive"]),
       dailyLine("I want more, not less.", ["more", "less"]),
       dailyLine("Stop at the shop.", ["stop", "shop"]),
-      dailyLine("The ball can drop and pop.", ["drop", "pop"]),
-      dailyLine("Hop to the top.", ["hop", "top"]),
+      dailyLine("The ball can drop.", ["drop"]),
+      dailyLine("It can pop.", ["pop"]),
+      dailyLine("I can hop.", ["hop"]),
+      dailyLine("Go to the top.", ["top"]),
     ],
     32: [
       dailyLine("The customer can buy clothes and shoes.", ["customer", "clothes", "shoes"]),
       dailyLine("The sale price is on the receipt.", ["sale", "receipt"]),
-      dailyLine("This bag is big; that bag is small.", ["big", "small"]),
-      dailyLine("They are not the same; they are different.", ["same", "different"]),
-      dailyLine("The black track is at the back.", ["black", "track", "back"]),
-      dailyLine("Pack a snack if you lack time.", ["pack", "snack", "lack"]),
+      dailyLine("This bag is big.", ["big"]),
+      dailyLine("That bag is small.", ["small"]),
+      dailyLine("They are not the same.", ["same"]),
+      dailyLine("They are different.", ["different"]),
+      dailyLine("The track is black.", ["track", "black"]),
+      dailyLine("Go to the back.", ["back"]),
+      dailyLine("Pack a snack.", ["pack", "snack"]),
+      dailyLine("I lack time.", ["lack"]),
     ],
     33: [
-      dailyLine("The waiter has the restaurant menu.", ["waiter", "restaurant", "menu"]),
+      dailyLine("The restaurant is here.", ["restaurant"]),
+      dailyLine("The waiter has the menu.", ["waiter", "menu"]),
       dailyLine("The food is on the table.", ["food", "table"]),
       dailyLine("Eat and drink.", ["eat", "drink"]),
       dailyLine("Bring one thing.", ["bring", "thing"]),
@@ -2337,26 +2505,31 @@
       dailyLine("They sing in spring.", ["sing", "spring"]),
     ],
     34: [
-      dailyLine("Drink water, coffee or tea.", ["drink", "water", "coffee", "tea"]),
+      dailyLine("Drink water or tea.", ["drink", "water", "tea"]),
+      dailyLine("I like coffee.", ["coffee"]),
       dailyLine("The rice is hot, not cold.", ["rice", "hot", "cold"]),
       dailyLine("Ask one thing and get an answer.", ["ask", "thing", "answer"]),
-      dailyLine("Bring the ring to the king.", ["bring", "ring", "king"]),
+      dailyLine("Bring the ring.", ["bring", "ring"]),
+      dailyLine("The king is here.", ["king"]),
       dailyLine("They sing in spring.", ["sing", "spring"]),
     ],
     35: [
       dailyLine("I eat noodles with chicken and beef.", ["noodles", "chicken", "beef"]),
-      dailyLine("Give a tip with the bill.", ["tip", "bill"]),
+      dailyLine("Pay the bill and a tip.", ["tip", "bill"]),
       dailyLine("I want more, not less.", ["more", "less"]),
       dailyLine("Sit and rest.", ["sit", "rest"]),
-      dailyLine("The test is the best.", ["test", "best"]),
-      dailyLine("The nest is in the west.", ["nest", "west"]),
+      dailyLine("The nest is near the tree.", ["nest"]),
+      dailyLine("Go to the west.", ["west"]),
       dailyLine("Stand with your hand on your chest.", ["stand", "chest"]),
     ],
     36: [
-      dailyLine("The city has a street; the town has a road.", ["city", "street", "town", "road"]),
+      dailyLine("The city has a street.", ["city", "street"]),
+      dailyLine("The town has a road.", ["town", "road"]),
       dailyLine("The building is on the left.", ["building", "left"]),
-      dailyLine("The store is near, not far; go right.", ["near", "far", "right"]),
-      dailyLine("The price of ice is good.", ["price", "ice"]),
+      dailyLine("The store is near.", ["near"]),
+      dailyLine("Go right; it is not far.", ["right", "far"]),
+      dailyLine("I know the price.", ["price"]),
+      dailyLine("The ice is cold.", ["ice"]),
       dailyLine("I eat rice twice a day.", ["rice", "twice"]),
       dailyLine("Take a nice slice.", ["nice", "slice"]),
     ],
@@ -2365,108 +2538,158 @@
       dailyLine("The pharmacy is inside the store.", ["pharmacy", "inside", "store"]),
       dailyLine("Go outside and look up and down.", ["outside", "up", "down"]),
       dailyLine("I found a round thing.", ["found", "round"]),
-      dailyLine("Look around on the ground when you hear a sound.", ["around", "ground", "sound"]),
-      dailyLine("We are bound for the park.", ["bound", "park"]),
+      dailyLine("Look around the park.", ["around", "park"]),
+      dailyLine("The bag is on the ground.", ["ground"]),
+      dailyLine("I hear a sound.", ["sound"]),
     ],
     38: [
       dailyLine("The school is near the station.", ["school", "station"]),
       dailyLine("The police are at the corner.", ["police", "corner"]),
-      dailyLine("This place is here, not there.", ["place", "here", "there"]),
-      dailyLine("The store has one more door on this floor.", ["store", "more", "door", "floor"]),
-      dailyLine("Look over and under the table.", ["over", "under"]),
-      dailyLine("I was on the shore before.", ["shore", "before"]),
+      dailyLine("Come to this place.", ["place"]),
+      dailyLine("You can come here.", ["here"]),
+      dailyLine("Do not go there.", ["there"]),
+      dailyLine("The store has one more door.", ["store", "more", "door"]),
+      dailyLine("The floor is clean.", ["floor"]),
+      dailyLine("The game is over.", ["over"]),
+      dailyLine("Look under the table.", ["under"]),
+      dailyLine("The shore is near.", ["shore"]),
+      dailyLine("I eat before work.", ["before"]),
     ],
     39: [
       dailyLine("The tree is by the sea.", ["tree", "sea"]),
       dailyLine("A bee is on the beach.", ["bee", "beach"]),
-      dailyLine("The day has light; the night is dark.", ["day", "light", "night", "dark"]),
-      dailyLine("I found it bound to the ground.", ["found", "bound", "ground"]),
-      dailyLine("The ball is round and has a sound.", ["round", "sound"]),
+      dailyLine("The light is on.", ["light"]),
+      dailyLine("I work in the day.", ["day"]),
+      dailyLine("The night is dark.", ["night", "dark"]),
+      dailyLine("I found it on the ground.", ["found", "ground"]),
+      dailyLine("The ball is round.", ["round"]),
+      dailyLine("I hear a sound.", ["sound"]),
       dailyLine("Look around the park.", ["around", "park"]),
     ],
     40: [
-      dailyLine("The grass and flower are by the river.", ["grass", "flower", "river"]),
+      dailyLine("The grass is by the river.", ["grass", "river"]),
+      dailyLine("The flower is here.", ["flower"]),
       dailyLine("The lake is under the mountain.", ["lake", "mountain"]),
-      dailyLine("It is hot down here and cold up high.", ["hot", "cold", "high"]),
+      dailyLine("It is hot down here.", ["hot"]),
+      dailyLine("It is cold up high.", ["cold", "high"]),
       dailyLine("The school has a rule.", ["school", "rule"]),
-      dailyLine("The cool pool is low.", ["cool", "pool", "low"]),
-      dailyLine("The fool can use the tool.", ["fool", "tool"]),
+      dailyLine("The pool is cool.", ["pool", "cool"]),
+      dailyLine("The water is low.", ["low"]),
+      dailyLine("I feel like a fool.", ["fool"]),
+      dailyLine("I can use this tool.", ["tool"]),
     ],
     41: [
-      dailyLine("The sun is in the sky by a cloud.", ["sun", "sky", "cloud"]),
+      dailyLine("The sun is in the sky.", ["sun", "sky"]),
+      dailyLine("I see a cloud.", ["cloud"]),
       dailyLine("The bird is on the bench.", ["bird", "bench"]),
       dailyLine("The seat is near, not far.", ["seat", "near", "far"]),
-      dailyLine("My clothes are wet but my hair is dry.", ["wet", "dry"]),
+      dailyLine("My clothes are wet.", ["wet"]),
+      dailyLine("My hair is dry.", ["dry"]),
       dailyLine("Heat the meat and eat.", ["heat", "meat", "eat"]),
-      dailyLine("The sweet sound has a good beat.", ["sweet", "beat"]),
+      dailyLine("This food is sweet.", ["sweet"]),
+      dailyLine("I hear the beat.", ["beat"]),
     ],
     42: [
       dailyLine("Today is a good day.", ["today", "day"]),
       dailyLine("Yesterday morning was cold.", ["yesterday", "morning"]),
       dailyLine("Come early, not late.", ["early", "late"]),
       dailyLine("I eat before work and rest after.", ["before", "after"]),
-      dailyLine("The sky is blue; that is true.", ["blue", "true"]),
+      dailyLine("The sky is blue.", ["blue"]),
+      dailyLine("That is true.", ["true"]),
       dailyLine("This shoe is good too.", ["shoe", "too"]),
-      dailyLine("You two go through the door at night.", ["two", "through", "night"]),
+      dailyLine("You two go through the door.", ["two", "through"]),
+      dailyLine("I go at night.", ["night"]),
     ],
     43: [
-      dailyLine("Tomorrow and yesterday are in the same week.", ["tomorrow", "yesterday", "week"]),
-      dailyLine("A month is in a year.", ["month", "year"]),
-      dailyLine("Start before work and finish after.", ["start", "before", "finish", "after"]),
+      dailyLine("Tomorrow is a work day.", ["tomorrow"]),
+      dailyLine("This week is good.", ["week"]),
+      dailyLine("Yesterday was good.", ["yesterday"]),
+      dailyLine("This month is good.", ["month"]),
+      dailyLine("It is a new year.", ["year"]),
+      dailyLine("Start before work.", ["start", "before"]),
+      dailyLine("Finish after work.", ["finish", "after"]),
       dailyLine("The screen is clean.", ["screen", "clean"]),
       dailyLine("The teen has seen it.", ["teen", "seen"]),
       dailyLine("What do you mean by green?", ["mean", "green"]),
     ],
     44: [
-      dailyLine("I see the sun and a cloud in this weather.", ["weather", "sun", "cloud"]),
-      dailyLine("The rain and wind are cold and wet.", ["rain", "wind", "cold", "wet"]),
+      dailyLine("I see the sun.", ["sun"]),
+      dailyLine("A cloud is in the sky.", ["cloud"]),
+      dailyLine("The weather is good.", ["weather"]),
+      dailyLine("Rain and wind can make me wet.", ["rain", "wind", "wet"]),
+      dailyLine("It is cold.", ["cold"]),
       dailyLine("Hot air can make clothes dry.", ["hot", "dry"]),
-      dailyLine("My face is in this place.", ["face", "place"]),
-      dailyLine("The race has more space.", ["race", "space"]),
-      dailyLine("This case has a good base.", ["case", "base"]),
+      dailyLine("Look at my face.", ["face"]),
+      dailyLine("This is a good place.", ["place"]),
+      dailyLine("I can see the race.", ["race"]),
+      dailyLine("I need more space.", ["space"]),
+      dailyLine("This case is good.", ["case"]),
+      dailyLine("This is the base.", ["base"]),
     ],
     45: [
-      dailyLine("My mother, father, brother and sister are home.", ["mother", "father", "brother", "sister"]),
-      dailyLine("My parents are not old; they are young.", ["parents", "old", "young"]),
+      dailyLine("My mother and father are home.", ["mother", "father"]),
+      dailyLine("My brother and sister are here.", ["brother", "sister"]),
+      dailyLine("My parents are not old.", ["parents", "old"]),
+      dailyLine("They are young.", ["young"]),
       dailyLine("The man and woman are fine.", ["man", "woman", "fine"]),
       dailyLine("This line is mine.", ["line", "mine"]),
-      dailyLine("Nine is on this sign, and it can shine.", ["nine", "sign", "shine"]),
+      dailyLine("I see nine.", ["nine"]),
+      dailyLine("The name is on the sign.", ["sign"]),
+      dailyLine("It can shine.", ["shine"]),
     ],
     46: [
-      dailyLine("My sister and friend are happy, not sad.", ["sister", "friend", "happy", "sad"]),
-      dailyLine("The man and woman have one boy.", ["man", "woman", "one", "boy"]),
+      dailyLine("My sister is happy.", ["sister", "happy"]),
+      dailyLine("My friend is not sad.", ["friend", "sad"]),
+      dailyLine("The man and woman are here.", ["man", "woman"]),
+      dailyLine("They have one boy.", ["one", "boy"]),
       dailyLine("A parent can help a child.", ["parent", "child"]),
       dailyLine("None of the work is done.", ["done", "none"]),
-      dailyLine("Run in the sun for fun.", ["run", "sun", "fun"]),
+      dailyLine("Run in the sun.", ["run", "sun"]),
+      dailyLine("I do it for fun.", ["fun"]),
     ],
     47: [
-      dailyLine("The girl and child are happy at home.", ["girl", "child", "happy", "home"]),
-      dailyLine("People know my name.", ["people", "name"]),
-      dailyLine("Love is good; hate is sad.", ["love", "hate", "sad"]),
+      dailyLine("The girl and child are home.", ["girl", "child", "home"]),
+      dailyLine("They are happy.", ["happy"]),
+      dailyLine("A lot of people are here.", ["people", "lot"]),
+      dailyLine("You know my name.", ["name"]),
+      dailyLine("Love is good; hate is bad.", ["love", "hate"]),
+      dailyLine("I feel sad.", ["sad"]),
       dailyLine("It is hot, not cold.", ["hot", "not"]),
-      dailyLine("I got a lot.", ["got", "lot"]),
-      dailyLine("The shot hit the spot.", ["shot", "spot"]),
+      dailyLine("I got a shot.", ["got", "shot"]),
+      dailyLine("This is the spot.", ["spot"]),
     ],
     48: [
-      dailyLine("My head, face, eye, ear and nose feel good.", ["head", "face", "eye", "ear", "nose"]),
+      dailyLine("My head and face feel good.", ["head", "face"]),
+      dailyLine("My eye and ear are fine.", ["eye", "ear"]),
+      dailyLine("My nose is clean.", ["nose"]),
       dailyLine("A healthy man is strong, not weak.", ["healthy", "strong", "weak"]),
-      dailyLine("He is sick, so the day may be bad.", ["sick", "day", "may"]),
+      dailyLine("He is sick.", ["sick"]),
+      dailyLine("The day may be bad.", ["day", "may"]),
       dailyLine("Say which way to go.", ["say", "way"]),
-      dailyLine("Pay to play.", ["pay", "play"]),
+      dailyLine("I pay now.", ["pay"]),
+      dailyLine("I like to play.", ["play"]),
     ],
     49: [
       dailyLine("My mouth and tooth hurt.", ["mouth", "tooth", "hurt"]),
-      dailyLine("My neck, hand and arm can heal.", ["neck", "hand", "arm", "heal"]),
-      dailyLine("Sleep at night and wake in the light.", ["sleep", "night", "wake", "light"]),
+      dailyLine("My neck and arm can heal.", ["neck", "arm", "heal"]),
+      dailyLine("Give me your hand.", ["hand"]),
+      dailyLine("Sleep at night.", ["sleep", "night"]),
+      dailyLine("Wake when there is light.", ["wake", "light"]),
       dailyLine("Write it right.", ["write", "right"]),
       dailyLine("They might fight.", ["might", "fight"]),
     ],
     50: [
-      dailyLine("My leg, foot and back have pain.", ["leg", "foot", "back", "pain"]),
-      dailyLine("My body is good, and I do not feel bad.", ["body", "good", "bad"]),
-      dailyLine("Sit here and stand near.", ["sit", "here", "stand", "near"]),
-      dailyLine("I hear you, dear.", ["hear", "dear"]),
-      dailyLine("This year, say no to fear.", ["year", "fear"]),
+      dailyLine("I have pain in my leg.", ["pain", "leg"]),
+      dailyLine("My foot is weak.", ["foot"]),
+      dailyLine("Look back now.", ["back"]),
+      dailyLine("My body is strong.", ["body"]),
+      dailyLine("I feel good, not bad.", ["good", "bad"]),
+      dailyLine("You can sit here.", ["sit", "here"]),
+      dailyLine("Stand near me.", ["stand", "near"]),
+      dailyLine("I can hear you.", ["hear"]),
+      dailyLine("Dear friend, I can help.", ["dear"]),
+      dailyLine("It is a new year.", ["year"]),
+      dailyLine("I feel fear.", ["fear"]),
     ],
   };
 
@@ -2750,11 +2973,25 @@
   }
 
   function validateCombinedDailySentenceSet(items, words, day = words[0]?.day || state.currentDay) {
-    if (!validateDailySentenceSet(items, words, day) || items.length >= words.length) return false;
+    if (!items.length) return false;
+    const allowedVocabulary = allowedVocabularyForDay(day);
+    const seenTargets = new Set();
     return items.every((item) => {
+      const tokens = dailyEnglishTokens(item.english);
       const usage = dailyTargetUsage([item], words);
       const targetCount = [...usage.values()].reduce((total, count) => total + count, 0);
-      return targetCount >= 2 && targetCount <= 5;
+      const currentTargets = [...usage.entries()].filter(([, count]) => count === 1).map(([word]) => word);
+      const repeatsTarget = [...usage.values()].some((count) => count > 1)
+        || currentTargets.some((word) => seenTargets.has(word));
+      if (!item.reviewedNatural
+        || tokens.length < 3
+        || tokens.length > 7
+        || targetCount < 1
+        || targetCount > 3
+        || repeatsTarget
+        || !validateDailySentenceQuality([item], allowedVocabulary)) return false;
+      currentTargets.forEach((word) => seenTargets.add(word));
+      return true;
     });
   }
 
@@ -2821,6 +3058,15 @@
         const usage = dailyTargetUsage([item], words);
         const focus = [...usage.entries()].filter(([, count]) => count === 1).map(([key]) => key);
         return { ...item, focus };
+      }).filter((item) => {
+        const tokens = dailyEnglishTokens(item.english);
+        const targetCount = [...dailyTargetUsage([item], words).values()].reduce((total, count) => total + count, 0);
+        return item.reviewedNatural
+          && tokens.length >= 3
+          && tokens.length <= 7
+          && targetCount >= 1
+          && targetCount <= 3
+          && validateDailySentenceQuality([item], allowedVocabularyForDay(day));
       });
     }
     const preferred = state.customDays[day] ? [] : (dailyNaturalSentenceLibrary[day] || []);
@@ -2859,7 +3105,7 @@
         : validateDailySentenceSet(items, words, day);
       if (valid) return items;
     }
-    console.warn(`Day ${day} sentence generation failed exact target-word validation.`);
+    console.warn(`Day ${day} has no sentence set that passes the natural, short, learned-word checks.`);
     return [];
   }
   function dailyFocusWords(item, day) {
@@ -3383,7 +3629,7 @@
       scopedWords,
     });
     $("#reviewSentenceSummary").textContent = selectedEnd
-      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · 使用上方选择的 ${scopedWords.length} 个词自然组句`
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · 从上方选择的 ${scopedWords.length} 个词中挑选自然句子`
       : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
     $("#shadowReviewSentences").disabled = items.length === 0;
