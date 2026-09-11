@@ -2,10 +2,11 @@
   "use strict";
 
   const STORAGE_KEY = "english365-progress-v1";
+  const LEARNED_THROUGH_DAY = 11;
   const data = window.ENGLISH_365_DATA;
   const defaultState = {
-    currentDay: 3,
-    studyDay: 3,
+    currentDay: LEARNED_THROUGH_DAY,
+    studyDay: LEARNED_THROUGH_DAY,
     customDays: {},
     statuses: {},
     mistakes: {},
@@ -158,7 +159,7 @@
   }
 
   function recordedStudyDay(saved) {
-    const learnedDays = [3];
+    const learnedDays = [LEARNED_THROUGH_DAY];
     Object.entries(saved?.statuses || {}).forEach(([key, status]) => {
       if (status === "learning" || status === "mastered") learnedDays.push(Number(key.split(":")[0]));
     });
@@ -169,6 +170,21 @@
     return Math.max(1, Math.min(365, latest));
   }
 
+  function applyLearnedThroughBaseline(merged, previousBaseline = 0) {
+    if (Number(previousBaseline || 0) >= LEARNED_THROUGH_DAY) return merged;
+    merged.statuses = { ...(merged.statuses || {}) };
+    merged.touchedDays = { ...(merged.touchedDays || {}) };
+    for (let day = 1; day <= LEARNED_THROUGH_DAY; day += 1) {
+      merged.touchedDays[day] = true;
+      (data.days[day - 1]?.words || []).forEach((_, index) => {
+        const key = `${day}:${index}`;
+        if (merged.statuses[key] !== "mastered") merged.statuses[key] = "learning";
+      });
+    }
+    merged.learnedThroughBaseline = LEARNED_THROUGH_DAY;
+    return merged;
+  }
+
   function loadState() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -176,11 +192,15 @@
       const studyDay = Number.isFinite(Number(saved?.studyDay))
         ? Number(saved.studyDay)
         : recordedStudyDay(saved);
-      merged.studyDay = Math.max(1, Math.min(365, studyDay));
+      merged.studyDay = Math.max(LEARNED_THROUGH_DAY, Math.min(365, studyDay));
       merged.currentDay = merged.studyDay;
-      return merged;
+      return applyLearnedThroughBaseline(merged, saved?.learnedThroughBaseline);
     } catch (_) {
-      return { ...defaultState };
+      return applyLearnedThroughBaseline({
+        ...defaultState,
+        statuses: {},
+        touchedDays: {},
+      });
     }
   }
 
@@ -278,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=desktop-day11-50-31", { updateViaCache: "none" })
+          .register("./sw.js?v=final-mixed-day12-50-33", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -286,6 +306,7 @@
   }
 
   function init() {
+    saveState();
     populateDaySelect();
     populateReviewWeekSelect();
     bindNavigation();
@@ -531,7 +552,7 @@
           <button class="loop-word" data-day="${day}" data-index="${index}" aria-label="循环播放 ${escapeHTML(item.english)}">↻ <span>循环</span></button>
         </div>
       </div>
-      <span class="word-meaning">${escapeHTML(item.chinese)}</span>
+      <span class="word-meaning">${escapeHTML(shortMeaning(item.chinese) || item.chinese)}</span>
       <div class="word-actions">
         <span class="word-number">学习状态</span>
         <select class="status-select" data-day="${day}" data-index="${index}" aria-label="${escapeHTML(item.english)} 的学习状态">
@@ -807,7 +828,7 @@
   }
 
   async function speakWordPair(item, token, withChinese = true) {
-    if (withChinese) await speakQueuedPair(item.english, item.chinese, token);
+    if (withChinese) await speakQueuedPair(item.english, shortMeaning(item.chinese) || item.chinese, token);
     else await speak(item.english, "en-US", token);
   }
 
@@ -995,7 +1016,7 @@
 
   function updatePlayer(item) {
     $("#playerWord").textContent = item?.english || "这一天还没有单词";
-    $("#playerMeaning").textContent = item?.chinese || "点击下方按钮添加";
+    $("#playerMeaning").textContent = item ? (shortMeaning(item.chinese) || item.chinese) : "点击下方按钮添加";
   }
 
   function scrollCardIntoView(card) {
@@ -1052,7 +1073,7 @@
     $("#dictationIndex").textContent = hasWords ? String(dictationIndex + 1) : "0";
     $("#dictationTotal").textContent = String(words.length);
     $("#dictationProgress").style.width = hasWords ? `${((dictationIndex + 1) / words.length) * 100}%` : "0%";
-    $("#dictationMeaning").textContent = item?.chinese || "这一天还没有单词";
+    $("#dictationMeaning").textContent = item ? (shortMeaning(item.chinese) || item.chinese) : "这一天还没有单词";
     $("#dictationEnglish").textContent = item?.english || "—";
     $("#dictationPhonetic").textContent = item?.phonetic || "";
     $("#dictationAnswer").hidden = true;
@@ -1224,7 +1245,7 @@
     return String(chinese || "")
       .replace(/（[^）]*）|\([^)]*\)/g, "")
       .replace(/\b(?:pl|abbr|adv|adj|prep|pron|n|v)\.\s*/gi, "")
-      .split(/[；;]/)[0]
+      .split(/[；;\/／]/)[0]
       .trim();
   }
 
@@ -2979,7 +3000,7 @@
       return `<div class="editor-row">
         <span>${String(index + 1).padStart(2, "0")}</span>
         <input class="edit-en" value="${escapeHTML(item.english || "")}" placeholder="英文" aria-label="第 ${index + 1} 个词的英文" autocomplete="off" />
-        <input class="edit-zh" value="${escapeHTML(item.chinese || "")}" placeholder="中文意思" aria-label="第 ${index + 1} 个词的中文" autocomplete="off" />
+        <input class="edit-zh" value="${escapeHTML(shortMeaning(item.chinese) || item.chinese || "")}" placeholder="中文意思" aria-label="第 ${index + 1} 个词的中文" autocomplete="off" />
         <input class="edit-ph" value="${escapeHTML(item.phonetic || "")}" placeholder="如 /wɔːtər/" aria-label="第 ${index + 1} 个词的音标" autocomplete="off" />
       </div>`;
     }).join("");
