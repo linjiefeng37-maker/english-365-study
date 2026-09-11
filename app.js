@@ -278,7 +278,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=allowed-vocabulary-28", { updateViaCache: "none" })
+          .register("./sw.js?v=allowed-vocabulary-29", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -2529,6 +2529,8 @@
   function weeklySentencesForWeek(week, offset = 0, scopedWords = wordsForWeek(week)) {
     const words = scopedWords;
     if (words.length < 2) return [];
+    const latestDay = Math.max(...words.map((word) => Number(word.day) || 1));
+    const allowedVocabulary = allowedVocabularyForDay(latestDay);
     const available = new Set(words.map((word) => word.english.toLowerCase()));
     const curated = (weeklySentenceLibrary[week] || []).filter((item) => {
       const focus = item.focus.filter((word) => available.has(word.toLowerCase()));
@@ -2543,7 +2545,7 @@
       });
     }
     const generated = rotateDailyItems(words, offset)
-      .map((word, index) => dailyNaturalSentence(word, words, Number(offset || 0) + index))
+      .map((word, index) => dailyNaturalSentence(word, words, allowedVocabulary, Number(offset || 0) + index))
       .filter(Boolean);
     const seen = new Set();
     const candidates = [...curated, ...natural, ...generated].filter((item) => {
