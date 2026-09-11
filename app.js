@@ -257,8 +257,17 @@
       if (choice?.outcome !== "accepted") showInstallHelp();
     });
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
+      let refreshingForUpdate = false;
+      window.navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshingForUpdate) return;
+        refreshingForUpdate = true;
+        window.location.reload();
+      });
       window.addEventListener("load", () => {
-        window.navigator.serviceWorker.register("./sw.js").then((registration) => registration.update()).catch(() => {});
+        window.navigator.serviceWorker
+          .register("./sw.js?v=cache-network-first-24", { updateViaCache: "none" })
+          .then((registration) => registration.update())
+          .catch(() => {});
       });
     }
   }
