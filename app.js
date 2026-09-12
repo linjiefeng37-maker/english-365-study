@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=natural-short-sentences-36", { updateViaCache: "none" })
+          .register("./sw.js?v=context-review-37", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1388,12 +1388,14 @@
     "can help": "可以帮忙",
     "can hear": "能听见",
     "call me": "给我打电话",
+    "come home": "回家",
     "come in": "进来",
     "come near": "靠近",
     "feel fear": "感到害怕",
     "for free": "免费",
     "got a shot": "打了一针",
     "go out": "出去",
+    "go home": "回家",
     "in class": "在上课",
     "in the book": "在书里",
     "in the day": "在白天",
@@ -1413,7 +1415,9 @@
     "sit down": "坐下",
     "take your time": "慢慢来",
     "the bathroom floor": "浴室地板",
+    "this way": "这样",
     "very well": "很好地",
+    "with fear": "因为害怕",
     "with my eyes": "用我的眼睛",
   });
 
@@ -1426,8 +1430,27 @@
     const key = String(token || "").toLowerCase();
     const previous = String(tokens[index - 1] || "").toLowerCase();
     const next = String(tokens[index + 1] || "").toLowerCase();
-    if (key === "left") return previous === "turn" ? "向左" : "离开了";
-    if (key === "right") return ["go", "turn"].includes(previous) ? "向右" : "正确的";
+    const following = String(tokens[index + 2] || "").toLowerCase();
+    if (key === "may") return next === "enter" ? "可以" : "可能";
+    if (key === "can") {
+      const permissionActions = new Set(["call", "close", "come", "enter", "go", "open", "sit", "start", "take", "use"]);
+      return ["you", "we"].includes(previous) && permissionActions.has(next) ? "可以" : "能";
+    }
+    if (key === "would" && next === "you") return "愿意";
+    if (key === "out" && ["come", "go"].includes(previous)) return "出去";
+    if (key === "in" && ["come", "go"].includes(previous)) return "进来";
+    if (key === "all" && ["am", "are", "is"].includes(previous)) return "都";
+    if (key === "well" && previous === "very") return "好地";
+    if (key === "left") {
+      if (["go", "turn"].includes(previous)) return "向左";
+      if (previous === "the") return "左边";
+      return "离开了";
+    }
+    if (key === "right") {
+      if (tokens.includes("write")) return "正确地";
+      if (tokens.includes("go") || previous === "turn") return "向右";
+      return "正确的";
+    }
     if (key === "on" && ["is", "are", "was", "were"].includes(previous) && next !== "the") return "开着";
     if (key === "off" && ["is", "are", "was", "were"].includes(previous)) return "关着";
     if (key === "light" && tokens.includes("off")) return "灯";
@@ -1435,6 +1458,14 @@
     if (key === "french" && ["read", "speak"].includes(previous)) return "法语";
     if (key === "cook" && ["a", "the", "our", "my", "your", "his", "her", "their"].includes(previous)) return "厨师";
     if (key === "over" && ["is", "was"].includes(previous)) return "结束了";
+    if (key === "way" && previous === "this") return "这样";
+    if (key === "full" && previous === "me") return "饱";
+    if (key === "shook" && tokens.includes("fear")) return "发抖";
+    if (key === "cool" && tokens.includes("pool")) return "凉快的";
+    if (key === "land" && previous === "will") return "降落";
+    if (key === "mean" && tokens.includes("what")) return "意思是";
+    if (key === "for" && previous === "good") return "对";
+    if (key === "with" && ["eyes", "hand"].includes(following)) return "用";
     if (key === "to") {
       if (sentenceInfinitiveVerbs.has(next)) return ["want", "like", "need"].includes(previous) ? "去" : "为了";
       if (["me", "him", "her", "them", "you"].includes(next)) return "给";
@@ -1484,6 +1515,15 @@
       index += 1;
     }
     return segments;
+  }
+
+  function sentenceWordMeaning(item, word, scopeWords = []) {
+    const tokens = String(item.english || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*|\d+(?:\.\d+)?/g) || [];
+    const lower = tokens.map((token) => token.toLowerCase());
+    const key = String(word.english || word || "").toLowerCase();
+    const index = lower.indexOf(key);
+    if (index < 0) return shortMeaning(word.chinese) || String(word.chinese || "");
+    return sentenceTokenMeaning(tokens[index], index, lower, sentenceMeaningMap(scopeWords));
   }
 
   function sentenceSpeechSegments(item, displaySegments) {
@@ -3120,7 +3160,8 @@
   }
 
   function dailyFocusListHTML(item, day, englishOnly) {
-    return dailyFocusWords(item, day).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(shortMeaning(word.chinese) || word.chinese)}</small>`}</span>`).join("");
+    const scopeWords = dailyWords(day);
+    return dailyFocusWords(item, day).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(sentenceWordMeaning(item, word, scopeWords))}</small>`}</span>`).join("");
   }
 
   function dailySentenceCardHTML(item, index, day, englishOnly) {
@@ -3232,7 +3273,56 @@
   }
 
   function weeklyFocusListHTML(item, week, englishOnly = false) {
-    return weeklyFocusWords(item, week).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(shortMeaning(word.chinese) || word.chinese)}</small>`}</span>`).join("");
+    const scopeWords = wordsForWeek(week);
+    return weeklyFocusWords(item, week).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(sentenceWordMeaning(item, word, scopeWords))}</small>`}</span>`).join("");
+  }
+
+  const REVIEW_SENTENCE_MIN = 8;
+  const REVIEW_SENTENCE_MAX = 15;
+
+  function weeklySentenceGoal(dayCount, candidateCount) {
+    if (!candidateCount) return 0;
+    const preferred = Math.min(REVIEW_SENTENCE_MAX, Math.max(REVIEW_SENTENCE_MIN, dayCount * 2 + 4));
+    return Math.min(preferred, candidateCount);
+  }
+
+  function reviewSentenceIsNatural(item, allowedVocabulary) {
+    const tokenCount = dailyEnglishTokens(item.english).length;
+    return tokenCount >= 3
+      && tokenCount <= 7
+      && item.focus.length >= 1
+      && item.focus.length <= 5
+      && validateDailySentenceQuality([item], allowedVocabulary);
+  }
+
+  function balancedWeeklySentences(daySets, offset = 0) {
+    const candidateCount = daySets.reduce((total, group) => total + group.items.length, 0);
+    const amount = weeklySentenceGoal(daySets.length, candidateCount);
+    if (!amount) return [];
+    const buckets = rotateDailyItems(daySets, offset).map((group, index) => {
+      const ranked = [...group.items].sort((left, right) => {
+        const focusDifference = Math.min(3, right.focus.length) - Math.min(3, left.focus.length);
+        if (focusDifference) return focusDifference;
+        return dailyEnglishTokens(left.english).length - dailyEnglishTokens(right.english).length;
+      });
+      return rotateDailyItems(ranked, Number(offset || 0) + index);
+    });
+    const selected = [];
+    const seen = new Set();
+    while (selected.length < amount) {
+      let added = false;
+      for (const bucket of buckets) {
+        while (bucket.length && seen.has(dailyEnglishTokens(bucket[0].english).join(" "))) bucket.shift();
+        const item = bucket.shift();
+        if (!item) continue;
+        seen.add(dailyEnglishTokens(item.english).join(" "));
+        selected.push(item);
+        added = true;
+        if (selected.length >= amount) break;
+      }
+      if (!added) break;
+    }
+    return selected;
   }
 
   function weeklySentencesForWeek(week, offset = 0, scopedWords = wordsForWeek(week)) {
@@ -3248,19 +3338,23 @@
         && Boolean(dailyCombinedSentenceLibrary[day]?.length);
     });
     if (canUseCombinedDailySets) {
-      const combined = selectedDays.flatMap((day, dayIndex) => {
+      const daySets = selectedDays.map((day, dayIndex) => {
         const dayWords = dailyWords(day);
         const items = buildDailySentenceAttempt(day, dayWords, Number(offset || 0) + dayIndex);
-        return validateCombinedDailySentenceSet(items, dayWords, day) ? items : [];
-      }).filter((item) => validateDailySentenceQuality([item], allowedVocabulary));
-      return rotateDailyItems(combined, offset);
+        return {
+          day,
+          items: (validateCombinedDailySentenceSet(items, dayWords, day) ? items : [])
+            .filter((item) => reviewSentenceIsNatural(item, allowedVocabulary)),
+        };
+      }).filter((group) => group.items.length);
+      return balancedWeeklySentences(daySets, offset);
     }
     const available = new Set(words.map((word) => word.english.toLowerCase()));
     const curated = (weeklySentenceLibrary[week] || []).filter((item) => {
       const focus = item.focus.filter((word) => available.has(word.toLowerCase()));
       return focus.length >= 2
         && focus.length === item.focus.length
-        && validateDailySentenceQuality([item], allowedVocabulary);
+        && reviewSentenceIsNatural(item, allowedVocabulary);
     });
     const range = weekRange(week);
     const natural = [];
@@ -3269,20 +3363,24 @@
         const focus = item.focus.filter((word) => available.has(word.toLowerCase()));
         if (focus.length >= 2
           && focus.length === item.focus.length
-          && validateDailySentenceQuality([item], allowedVocabulary)) natural.push(item);
+          && reviewSentenceIsNatural(item, allowedVocabulary)) natural.push(item);
       });
     }
     const generated = rotateDailyItems(words, offset)
       .map((word, index) => dailyNaturalSentence(word, words, allowedVocabulary, Number(offset || 0) + index))
       .filter(Boolean);
     const seen = new Set();
-    const candidates = [...curated, ...natural, ...generated].filter((item) => {
+    const source = curated.length >= REVIEW_SENTENCE_MIN ? curated : [...curated, ...natural, ...generated];
+    const candidates = source.filter((item) => reviewSentenceIsNatural(item, allowedVocabulary)).map((item) => ({
+      ...item,
+      breakdown: [],
+    })).filter((item) => {
       const key = item.english.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
-    const amount = Math.min(8, candidates.length);
+    const amount = weeklySentenceGoal(selectedDays.length, candidates.length);
     const start = candidates.length ? Number(offset || 0) % candidates.length : 0;
     return Array.from({ length: amount }, (_, index) => candidates[(start + index) % candidates.length]);
   }
@@ -3631,7 +3729,7 @@
       scopedWords,
     });
     $("#reviewSentenceSummary").textContent = selectedEnd
-      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · 从上方选择的 ${scopedWords.length} 个词中挑选自然句子`
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${items.length} 句 · 只用已学词自然组句`
       : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
     $("#shadowReviewSentences").disabled = items.length === 0;
@@ -3653,7 +3751,7 @@
       scopedWords,
     });
     $("#listeningSummary").textContent = selectedEnd
-      ? `Week ${listeningWeek} · Day ${range.start}–Day ${selectedEnd} · ${scopedWords.length} learned words · English only`
+      ? `Week ${listeningWeek} · Day ${range.start}–Day ${selectedEnd} · ${items.length} sentences · English only`
       : `Week ${listeningWeek} has not been learned yet`;
     $("#playListeningSentences").disabled = items.length === 0;
     $("#refreshListeningSentences").disabled = items.length < 2;
