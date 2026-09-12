@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=grammar-context-38", { updateViaCache: "none" })
+          .register("./sw.js?v=grammar-context-39", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1399,6 +1399,7 @@
     "in class": "在上课",
     "in the book": "在书里",
     "in the day": "在白天",
+    "is over": "结束了",
     "like to play": "喜欢玩",
     "look around": "四处看看",
     "look at": "看",
@@ -1415,7 +1416,11 @@
     "sit down": "坐下",
     "take your time": "慢慢来",
     "the bathroom floor": "浴室地板",
+    "the day": "这一天",
+    "the same": "一样",
+    "the work": "这项工作",
     "this way": "这样",
+    "this year": "今年",
     "very well": "很好地",
     "with fear": "因为害怕",
     "with my eyes": "用我的眼睛",
@@ -1430,6 +1435,11 @@
     "call", "close", "come", "enter", "go", "leave", "open", "sit", "start", "take", "use",
   ]);
 
+  const sentenceStateAdjectives = new Set([
+    "bad", "cold", "cool", "fair", "far", "free", "full", "good", "happy", "hot", "hungry", "near",
+    "new", "old", "ready", "right", "same", "slow", "soft", "strong", "thin", "tight", "tired", "warm",
+  ]);
+
   function sentenceTokenMeaning(token, index, tokens, meanings) {
     const key = String(token || "").toLowerCase();
     const previous = String(tokens[index - 1] || "").toLowerCase();
@@ -1442,6 +1452,10 @@
     if (["do", "does", "did"].includes(key) && index === 0 && ["i", "you", "he", "she", "we", "they"].includes(next)) return "是否";
     if (key === "could" && index === 0 && next === "you") return "能否";
     if (key === "would" && next === "you") return "愿意";
+    if (["am", "are", "is"].includes(key) && sentenceStateAdjectives.has(next)) return "很";
+    if (key === "only") return "只";
+    if (key === "did") return "做了";
+    if (key === "sat") return "坐着";
     if (key === "out" && ["come", "go"].includes(previous)) return "出去";
     if (key === "in" && ["come", "go"].includes(previous)) return "进来";
     if (key === "all" && ["am", "are", "is"].includes(previous)) return "都";
@@ -1464,6 +1478,8 @@
     if (key === "cook" && ["a", "the", "our", "my", "your", "his", "her", "their"].includes(previous)) return "厨师";
     if (key === "over" && ["is", "was"].includes(previous)) return "结束了";
     if (key === "way" && previous === "this") return "这样";
+    if (key === "same" && previous === "the") return "一样";
+    if (key === "year" && previous === "this") return "今年";
     if (key === "free" && previous === "for") return "免费";
     if (key === "near" && previous === "come") return "靠近";
     if (key === "time" && previous === "your" && tokens.includes("take")) return "慢慢来";
@@ -1480,6 +1496,9 @@
       if (["school", "city", "village", "the"].includes(next) || ["go", "returned"].includes(previous)) return "到";
     }
     if (key === "with" && previous === "help") return "关于";
+    if (sentenceStateAdjectives.has(key) && ["am", "are", "is"].includes(previous)) {
+      return String(sentenceOrderTerms[key] || meanings.get(key) || token).replace(/的$/, "");
+    }
     return sentenceOrderTerms[key] || meanings.get(key) || token;
   }
 
