@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=everyday-natural-41", { updateViaCache: "none" })
+          .register("./sw.js?v=no-redundant-info-42", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -2313,7 +2313,7 @@
       dailyLine("The bear came into the room.", ["bear", "came", "room"]),
       dailyLine("Come near me.", ["near"]),
       dailyLine("My dear friend can help.", ["dear"]),
-      dailyLine("I can see with my eyes.", ["eyes"]),
+      dailyLine("My eyes are tired.", ["eyes"]),
       dailyLine("This is my ear.", ["ear"]),
       dailyLine("Where is home?", ["where"]),
       dailyLine("You must look under it.", ["must", "under"]),
@@ -3018,6 +3018,12 @@
     /^i\s+go\s+first[.!?]?$/i,
   ];
 
+  const rejectedRedundantInformationPatterns = [
+    /^(?:i|you|he|she|we|they)\s+can\s+see\s+with\s+(?:my|your|his|her|our|their)\s+eyes[.!?]?$/i,
+    /^(?:i|you|he|she|we|they)\s+can\s+hear\s+with\s+(?:my|your|his|her|our|their)\s+ears[.!?]?$/i,
+    /^(?:i|you|he|she|we|they)\s+can\s+smell\s+with\s+(?:my|your|his|her|our|their)\s+nose[.!?]?$/i,
+  ];
+
   const rejectedGrammarPatterns = [
     /\bi\s+(?:is|are|has|does)\b/i,
     /\b(?:you|we|they)\s+(?:is|am|has|does)\b/i,
@@ -3049,14 +3055,20 @@
     return true;
   }
 
+  function validateNoRedundantInformation(item) {
+    const english = String(item?.english || "").trim();
+    return !rejectedRedundantInformationPatterns.some((pattern) => pattern.test(english));
+  }
+
   function validateSentenceGrammarAndNaturalness(item, allowedVocabulary = null, requireHumanReviewed = false) {
     const english = String(item?.english || "").trim();
     const tokens = dailyEnglishTokens(english);
 
-    // 先检查句子结构和已学词白名单，再判断母语者日常是否会自然地这样说。
+    // 顺序固定为：语法与已学词 → 信息是否多余 → 母语者日常自然度。
     if (!validateDailySentenceQuality([item], allowedVocabulary)) return false;
     if (rejectedGrammarPatterns.some((pattern) => pattern.test(english))) return false;
     if (tokens.some((token, index) => index > 0 && token === tokens[index - 1])) return false;
+    if (!validateNoRedundantInformation(item)) return false;
     return validateEverydayNaturalness(item, requireHumanReviewed);
   }
 
