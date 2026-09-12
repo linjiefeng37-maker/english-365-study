@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=grammar-context-39", { updateViaCache: "none" })
+          .register("./sw.js?v=review-categories-40", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -3724,7 +3724,53 @@
         : reviewFilter === "mistakes" ? mistakes > 0
         : true;
       return matches;
+    }).sort((left, right) => {
+      const groupDifference = reviewWordGroup(left).order - reviewWordGroup(right).order;
+      return groupDifference || left.day - right.day || left.index - right.index;
     });
+  }
+
+  const reviewWordGroupDefinitions = Object.freeze([
+    { key: "scene", order: 0, title: "场景词", description: "同一生活场景中的词", icon: "⌂" },
+    { key: "pair", order: 1, title: "成对关系词", description: "成对或强关联记忆", icon: "↔" },
+    { key: "guide", order: 2, title: "引导词", description: "带出本日同词族的一词", icon: "→" },
+    { key: "family", order: 3, title: "同词族", description: "发音或词形相近的一组词", icon: "▤" },
+  ]);
+
+  function reviewWordGroup(item) {
+    const category = wordCategoryLabel(item);
+    if (category === "场景词") return reviewWordGroupDefinitions[0];
+    if (category === "成对关系词") return reviewWordGroupDefinitions[1];
+    if (category === "引导词") return reviewWordGroupDefinitions[2];
+    if (category === "同词族") return reviewWordGroupDefinitions[3];
+    const index = Number(item.index) || 0;
+    if (index < 5) return reviewWordGroupDefinitions[0];
+    if (index < 9) return reviewWordGroupDefinitions[1];
+    if (index === 9) return reviewWordGroupDefinitions[2];
+    return reviewWordGroupDefinitions[3];
+  }
+
+  function reviewWordGroupsHTML(words) {
+    const grouped = new Map(reviewWordGroupDefinitions.map((group) => [group.key, []]));
+    words.forEach((item) => grouped.get(reviewWordGroup(item).key).push(item));
+    return reviewWordGroupDefinitions.map((group, groupIndex) => {
+      const groupWords = grouped.get(group.key);
+      if (!groupWords.length) return "";
+      const cards = groupWords.map((item) => wordCardHTML(item, item.day, item.index, true)).join("");
+      const headingId = `reviewWordGroup-${group.key}`;
+      return `<section class="word-group review-word-group word-group-${groupIndex + 1}" aria-labelledby="${headingId}">
+        <div class="word-group-heading">
+          <div class="word-group-summary">
+            <span class="word-group-number" aria-hidden="true">${groupIndex + 1}</span>
+            <h2 id="${headingId}">${escapeHTML(group.title)}</h2>
+            <span class="word-group-count">${groupWords.length} 个</span>
+            <p>${escapeHTML(group.description)}</p>
+          </div>
+          <span class="review-word-group-icon" aria-hidden="true">${escapeHTML(group.icon)}</span>
+        </div>
+        <div class="word-group-grid">${cards}</div>
+      </section>`;
+    }).join("");
   }
 
   function renderReview() {
@@ -3751,9 +3797,10 @@
       ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · 显示 ${words.length}/${reviewTotal} 个词 · ${label}`
       : `第 ${reviewWeek} 周尚未学到，不显示后面的单词`;
     list.hidden = words.length === 0;
+    list.classList.toggle("word-grid--grouped", words.length > 0);
     $("#reviewEmpty").hidden = words.length !== 0;
     $("#playReview").disabled = words.length === 0;
-    list.innerHTML = words.map((item) => wordCardHTML(item, item.day, item.index, true)).join("");
+    list.innerHTML = reviewWordGroupsHTML(words);
     $$(".speak-word", list).forEach((button) => button.addEventListener("click", () => playSingleWord(Number(button.dataset.day), Number(button.dataset.index))));
     $$(".loop-word", list).forEach((button) => button.addEventListener("click", () => {
       if (button.classList.contains("active")) stopPlayback();
