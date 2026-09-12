@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=context-review-37", { updateViaCache: "none" })
+          .register("./sw.js?v=grammar-context-38", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1426,16 +1426,21 @@
     "read", "rest", "sell", "sleep", "speak", "start", "wait", "wake", "work", "write",
   ]);
 
+  const sentencePermissionActions = new Set([
+    "call", "close", "come", "enter", "go", "leave", "open", "sit", "start", "take", "use",
+  ]);
+
   function sentenceTokenMeaning(token, index, tokens, meanings) {
     const key = String(token || "").toLowerCase();
     const previous = String(tokens[index - 1] || "").toLowerCase();
     const next = String(tokens[index + 1] || "").toLowerCase();
     const following = String(tokens[index + 2] || "").toLowerCase();
-    if (key === "may") return next === "enter" ? "可以" : "可能";
+    if (key === "may") return sentencePermissionActions.has(next) ? "可以" : "可能";
     if (key === "can") {
-      const permissionActions = new Set(["call", "close", "come", "enter", "go", "open", "sit", "start", "take", "use"]);
-      return ["you", "we"].includes(previous) && permissionActions.has(next) ? "可以" : "能";
+      return ["you", "we"].includes(previous) && sentencePermissionActions.has(next) ? "可以" : "能";
     }
+    if (["do", "does", "did"].includes(key) && index === 0 && ["i", "you", "he", "she", "we", "they"].includes(next)) return "是否";
+    if (key === "could" && index === 0 && next === "you") return "能否";
     if (key === "would" && next === "you") return "愿意";
     if (key === "out" && ["come", "go"].includes(previous)) return "出去";
     if (key === "in" && ["come", "go"].includes(previous)) return "进来";
@@ -1459,6 +1464,9 @@
     if (key === "cook" && ["a", "the", "our", "my", "your", "his", "her", "their"].includes(previous)) return "厨师";
     if (key === "over" && ["is", "was"].includes(previous)) return "结束了";
     if (key === "way" && previous === "this") return "这样";
+    if (key === "free" && previous === "for") return "免费";
+    if (key === "near" && previous === "come") return "靠近";
+    if (key === "time" && previous === "your" && tokens.includes("take")) return "慢慢来";
     if (key === "full" && previous === "me") return "饱";
     if (key === "shook" && tokens.includes("fear")) return "发抖";
     if (key === "cool" && tokens.includes("pool")) return "凉快的";
@@ -1478,11 +1486,6 @@
   function sentenceOrderSegments(item, scopeWords = []) {
     const tokens = String(item.english || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*|\d+(?:\.\d+)?/g) || [];
     const meanings = sentenceMeaningMap(scopeWords);
-    if (Array.isArray(item.breakdown) && item.breakdown.length) {
-      return item.breakdown
-        .filter((part) => Array.isArray(part) && part[0] && part[1])
-        .map(([english, chinese]) => ({ english: String(english), chinese: String(chinese) }));
-    }
     const segments = [];
     for (let index = 0; index < tokens.length;) {
       const lower = tokens.map((token) => token.toLowerCase());
@@ -1527,10 +1530,7 @@
   }
 
   function sentenceSpeechSegments(item, displaySegments) {
-    if (!Array.isArray(item.breakdown) || !item.breakdown.length) return displaySegments;
-    return item.breakdown
-      .filter((part) => Array.isArray(part) && part[0] && part[1])
-      .map(([english, chinese]) => ({ english: String(english), chinese: String(chinese) }));
+    return displaySegments;
   }
 
   function sentenceFocusSet(focusWords = []) {
@@ -2990,6 +2990,21 @@
     /these\s+are\s+my\s+words/i,
   ];
 
+  const rejectedUnnaturalSentencePatterns = [
+    /^(?:i|we|you|they)\s+(?:know|read|think)\s+about\s+the\b/i,
+    /^today\s+(?:i\s+am|we\s+are)\s+learning\b/i,
+    /\bmy\s+self\b/i,
+    /\b(?:word|words)\s+(?:is|are)\s+my\b/i,
+  ];
+
+  const rejectedGrammarPatterns = [
+    /\bi\s+(?:is|are|has|does)\b/i,
+    /\b(?:you|we|they)\s+(?:is|am|has|does)\b/i,
+    /\b(?:he|she|it)\s+(?:am|are|have|do)\b/i,
+    /^(?:i|we|you|they)\s+(?:want|need|like|have)\s*[.!]$/i,
+    /^she\s*\?$/i,
+  ];
+
   function validateDailySentenceQuality(items, allowedVocabulary = null) {
     const seen = new Set();
     return items.every((item) => {
@@ -3006,10 +3021,23 @@
     });
   }
 
+  function validateSentenceGrammarAndNaturalness(item, allowedVocabulary = null, requireHumanReviewed = false) {
+    const english = String(item?.english || "").trim();
+    const tokens = dailyEnglishTokens(english);
+    if (!validateDailySentenceQuality([item], allowedVocabulary)) return false;
+    if (requireHumanReviewed && item.reviewedNatural !== true) return false;
+    if (rejectedUnnaturalSentencePatterns.some((pattern) => pattern.test(english))) return false;
+    if (rejectedGrammarPatterns.some((pattern) => pattern.test(english))) return false;
+    if (tokens.some((token, index) => index > 0 && token === tokens[index - 1])) return false;
+    return true;
+  }
+
   function validateDailySentenceSet(items, words, day = words[0]?.day || state.currentDay) {
     const expected = words.map((word) => String(word.english || "").trim().toLowerCase()).filter(Boolean);
     const allowedVocabulary = allowedVocabularyForDay(day);
-    if (!items.length || new Set(expected).size !== expected.length || !validateDailySentenceQuality(items, allowedVocabulary)) return false;
+    if (!items.length
+      || new Set(expected).size !== expected.length
+      || !items.every((item) => validateSentenceGrammarAndNaturalness(item, allowedVocabulary))) return false;
     const counts = dailyTargetUsage(items, words);
     return expected.every((word) => counts.get(word) === 1);
   }
@@ -3031,7 +3059,7 @@
         || targetCount < 1
         || targetCount > 3
         || repeatsTarget
-        || !validateDailySentenceQuality([item], allowedVocabulary)) return false;
+        || !validateSentenceGrammarAndNaturalness(item, allowedVocabulary, true)) return false;
       currentTargets.forEach((word) => seenTargets.add(word));
       return true;
     });
@@ -3087,7 +3115,7 @@
     const targetKey = String(word.english || "").trim().toLowerCase();
     return dailyFallbackCandidates(word, seed).find((candidate) => {
       const usage = dailyTargetUsage([candidate], words);
-      return validateDailySentenceQuality([candidate], allowedVocabulary)
+      return validateSentenceGrammarAndNaturalness(candidate, allowedVocabulary)
         && usage.get(targetKey) === 1
         && [...usage.entries()].every(([key, count]) => key === targetKey || count === 0);
     }) || null;
@@ -3108,7 +3136,7 @@
           && tokens.length <= 7
           && targetCount >= 1
           && targetCount <= 3
-          && validateDailySentenceQuality([item], allowedVocabularyForDay(day));
+          && validateSentenceGrammarAndNaturalness(item, allowedVocabularyForDay(day), true);
       });
     }
     const preferred = state.customDays[day] ? [] : (dailyNaturalSentenceLibrary[day] || []);
@@ -3116,7 +3144,7 @@
     const selected = [];
     const covered = new Set();
     rotateDailyItems(preferred, seed).forEach((item) => {
-      if (!validateDailySentenceQuality([item], allowedVocabulary)) return;
+      if (!validateSentenceGrammarAndNaturalness(item, allowedVocabulary, item.reviewedNatural === true)) return;
       const usage = dailyTargetUsage([item], words);
       const focus = [...usage.entries()].filter(([, count]) => count === 1).map(([key]) => key);
       const invalid = [...usage.values()].some((count) => count > 1) || focus.some((key) => covered.has(key));
@@ -3292,7 +3320,7 @@
       && tokenCount <= 7
       && item.focus.length >= 1
       && item.focus.length <= 5
-      && validateDailySentenceQuality([item], allowedVocabulary);
+      && validateSentenceGrammarAndNaturalness(item, allowedVocabulary, true);
   }
 
   function balancedWeeklySentences(daySets, offset = 0) {
@@ -3350,7 +3378,10 @@
       return balancedWeeklySentences(daySets, offset);
     }
     const available = new Set(words.map((word) => word.english.toLowerCase()));
-    const curated = (weeklySentenceLibrary[week] || []).filter((item) => {
+    const curated = (weeklySentenceLibrary[week] || []).map((item) => ({
+      ...item,
+      reviewedNatural: true,
+    })).filter((item) => {
       const focus = item.focus.filter((word) => available.has(word.toLowerCase()));
       return focus.length >= 2
         && focus.length === item.focus.length
@@ -3366,11 +3397,8 @@
           && reviewSentenceIsNatural(item, allowedVocabulary)) natural.push(item);
       });
     }
-    const generated = rotateDailyItems(words, offset)
-      .map((word, index) => dailyNaturalSentence(word, words, allowedVocabulary, Number(offset || 0) + index))
-      .filter(Boolean);
     const seen = new Set();
-    const source = curated.length >= REVIEW_SENTENCE_MIN ? curated : [...curated, ...natural, ...generated];
+    const source = curated.length >= REVIEW_SENTENCE_MIN ? curated : [...curated, ...natural];
     const candidates = source.filter((item) => reviewSentenceIsNatural(item, allowedVocabulary)).map((item) => ({
       ...item,
       breakdown: [],
