@@ -199,6 +199,21 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .word-group-memory strong, .word-group-memory small { display: block; }
 .word-group-memory strong { font-size: .98rem; }
 .word-group-memory small { margin-top: 2px; color: #6f7a72; font-size: .75rem; }
+.core-explanation-panel { margin: 0 0 16px; padding: 16px; border: 1px solid #c7dfcd; border-radius: 18px; background: rgba(255,255,255,.72); }
+.core-explanation-summary { display: flex; flex-wrap: wrap; gap: 10px; }
+.core-explanation-summary > span { min-width: 150px; padding: 10px 14px; border-radius: 13px; background: #e4f2e6; }
+.core-explanation-summary small, .core-explanation-summary strong { display: block; }
+.core-explanation-summary small { color: #6f7e73; font-size: .74rem; font-weight: 800; }
+.core-explanation-summary strong { margin-top: 3px; color: var(--group-color); font-size: 1.14rem; }
+.core-explanation-body h3 { margin: 15px 0 9px; color: #405247; font-size: .92rem; }
+.core-derivation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.core-derivation { display: flex; align-items: flex-start; flex-direction: column; gap: 4px; padding: 12px 14px; border-left: 4px solid var(--group-color); border-radius: 10px; background: #f7fbf6; }
+.core-derivation strong { color: var(--group-color); font-size: 1rem; }
+.core-derivation span { color: #5e6c62; font-size: .84rem; }
+.core-derivation b { color: #34473b; font-size: .88rem; }
+.core-scene-words { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.core-scene-words strong { margin-right: 2px; color: var(--group-color); font-size: .88rem; }
+.core-scene-words span { padding: 7px 10px; border-radius: 999px; color: #405247; background: #eaf4e9; font-size: .84rem; font-weight: 750; }
 .word-group-grid { display: grid; grid-template-columns: repeat(var(--group-columns, 3), minmax(0, 1fr)); gap: 12px; }
 .word-group-1 { --group-columns: 5; }
 .word-group-2 { --group-columns: 4; }
@@ -441,6 +456,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   .word-group-summary { align-items: flex-start; flex-wrap: wrap; }
   .word-group-heading p { flex-basis: 100%; margin: 0; font-size: .84rem; }
   .word-group-memory small { font-size: .72rem; }
+  .core-explanation-panel { padding: 13px; }
+  .core-explanation-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .core-explanation-summary > span { min-width: 0; }
+  .core-derivation-grid { grid-template-columns: 1fr; }
+  .core-scene-words { align-items: stretch; flex-direction: column; }
+  .core-scene-words span { border-radius: 10px; }
   .word-card { min-height: 142px; }
   .dictation-card { min-height: 430px; padding: 20px 15px; }
   .dictation-input-row { grid-template-columns: 50px minmax(0, 1fr); }

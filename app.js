@@ -546,16 +546,18 @@
 
   function learningGroupHTML(words, day) {
     const theme = String(words[0]?.theme || "生活场景").trim();
+    const hasCoreWordGroup = Boolean(words[0]?.coreWord);
     const groups = [
       {
         number: "1",
-        title: "场景词",
+        title: hasCoreWordGroup ? "核心词学习" : "场景词",
         count: "5 个",
-        description: `同一个生活场景：${theme}`,
-        memoryTitle: `场景：${theme}`,
-        memoryDescription: "这些词都在同一个场景中，帮助你整体记忆",
+        description: hasCoreWordGroup ? "3 个同核心词＋2 个同场景词" : `同一个生活场景：${theme}`,
+        memoryTitle: hasCoreWordGroup ? `核心词：${words[0].coreWord}` : `场景：${theme}`,
+        memoryDescription: hasCoreWordGroup ? "先理解核心，再联系同场景词" : "这些词都在同一个场景中，帮助你整体记忆",
         icon: "⌂",
-        words: words.slice(0, 5)
+        words: words.slice(0, 5),
+        explanation: hasCoreWordGroup ? coreWordExplanationHTML(words.slice(0, 5)) : ""
       },
       {
         number: "2",
@@ -596,13 +598,85 @@
             <div><strong>${escapeHTML(group.memoryTitle)}</strong><small>${escapeHTML(group.memoryDescription)}</small></div>
           </div>
         </div>
+        ${group.explanation || ""}
         <div class="word-group-grid">${cards}</div>
       </section>`;
     }).join("");
   }
 
+  function coreWordExplanationHTML(words) {
+    const meta = words[0] || {};
+    const coreWord = String(meta.coreWord || meta.english || "").trim();
+    const coreMeaning = String(meta.coreMeaning || meta.chinese || "").trim();
+    const explanationParts = String(meta.coreExplanation || "")
+      .split("｜")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const familyWords = words.slice(0, 3);
+    const sceneWords = words.slice(3, 5);
+
+    const derivations = coreWord.toLowerCase() === "work"
+      ? `<div class="core-derivation">
+          <strong>worker = work + er</strong>
+          <span>work = 工作</span>
+          <span>-er = 做这件事的人</span>
+          <b>→ 做工作的人</b>
+          <b>→ 工作人员</b>
+        </div>
+        <div class="core-derivation">
+          <strong>working = work + ing</strong>
+          <span>work = 工作</span>
+          <span>-ing = 正在做 / 这个动作</span>
+          <b>→ 正在工作 / 工作中的</b>
+        </div>`
+      : familyWords.slice(1).map((item, index) => {
+          const sourceExplanation = explanationParts[index + 1] || `${item.english}：${item.chinese}`;
+          return `<div class="core-derivation">
+            <strong>${escapeHTML(coreBuildFormula(coreWord, item.english))}</strong>
+            <span>${escapeHTML(`${coreWord} = ${coreMeaning}`)}</span>
+            <b>${escapeHTML(sourceExplanation)}</b>
+          </div>`;
+        }).join("");
+
+    return `<div class="core-explanation-panel">
+      <div class="core-explanation-summary">
+        <span><small>核心词</small><strong>${escapeHTML(coreWord)}</strong></span>
+        <span><small>基础意思</small><strong>${escapeHTML(coreMeaning)}</strong></span>
+      </div>
+      <div class="core-explanation-body">
+        <h3>怎么理解</h3>
+        <div class="core-derivation-grid">${derivations}</div>
+      </div>
+      <div class="core-scene-words">
+        <strong>同场景词</strong>
+        ${sceneWords.map((item) => `<span>${escapeHTML(item.english)} = ${escapeHTML(shortMeaning(item.chinese) || item.chinese)}</span>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  function coreBuildFormula(coreWord, derivedWord) {
+    const core = String(coreWord || "").toLowerCase();
+    const derived = String(derivedWord || "").toLowerCase();
+    if (!core || !derived || core === derived) return `${derivedWord} = ${coreWord}`;
+
+    const finalLetter = core.slice(-1);
+    if (derived.startsWith(`${core}${finalLetter}`)) {
+      return `${derivedWord} = ${coreWord} + ${derived.slice(core.length + 1)}`;
+    }
+    if (derived.startsWith(core)) return `${derivedWord} = ${coreWord} + ${derived.slice(core.length)}`;
+    if (derived.endsWith(core)) return `${derivedWord} = ${derived.slice(0, -core.length)} + ${coreWord}`;
+    if (core.endsWith("e") && derived.startsWith(core.slice(0, -1))) {
+      return `${derivedWord} = ${coreWord} + ${derived.slice(core.length - 1)}`;
+    }
+    if (core.endsWith("y") && derived.startsWith(`${core.slice(0, -1)}i`)) {
+      return `${derivedWord} = ${coreWord} + ${derived.slice(core.length)}`;
+    }
+    return `${derivedWord} ← ${coreWord}`;
+  }
+
   function wordCategoryLabel(item) {
     if (item.isGuide || item.category === "引导词") return "引导词";
+    if (item.category === "同核心词") return "同核心词";
     if (item.category === "同词族/同韵") return "同词族";
     if (item.category === "成对词") return "成对关系词";
     if (item.category === "场景词") return "场景词";
