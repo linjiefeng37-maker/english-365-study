@@ -298,7 +298,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=review-categories-40", { updateViaCache: "none" })
+          .register("./sw.js?v=everyday-natural-41", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -2294,7 +2294,7 @@
       dailyLine("Tell me about your phone.", ["tell", "about", "your"]),
       dailyLine("How should I spell it?", ["how", "should", "spell"]),
       dailyLine("These are new.", ["these", "new"]),
-      dailyLine("I can smell it very well.", ["smell", "very", "well"]),
+      dailyLine("I can smell it.", ["smell"]),
       dailyLine("Sell it before work.", ["sell", "before"]),
       dailyLine("The day is over.", ["over"]),
     ],
@@ -2302,7 +2302,7 @@
       dailyLine("Two men sat down.", ["two", "men", "down"]),
       dailyLine("Look at his face.", ["look", "face"]),
       dailyLine("He did it himself.", ["himself"]),
-      dailyLine("I go first.", ["first"]),
+      dailyLine("You go first.", ["first"]),
       dailyLine("I read French.", ["french"]),
       dailyLine("Our cook took it.", ["our", "cook", "took"]),
       dailyLine("Read the book.", ["book"]),
@@ -2811,7 +2811,7 @@
 
   const allowedDailyLine = (english, word) => sentence(english, "", [word.english], []);
   const dailyAllowedSentenceFactories = Object.freeze({
-    first: (word) => allowedDailyLine("I go first.", word),
+    first: (word) => allowedDailyLine("You go first.", word),
     french: (word) => allowedDailyLine("I speak French.", word),
     many: (word) => allowedDailyLine("I see many men.", word),
     himself: (word) => allowedDailyLine("He did it himself.", word),
@@ -3014,6 +3014,8 @@
     /^today\s+(?:i\s+am|we\s+are)\s+learning\b/i,
     /\bmy\s+self\b/i,
     /\b(?:word|words)\s+(?:is|are)\s+my\b/i,
+    /^i\s+can\s+(?:smell|hear|see)\s+it\s+very\s+well[.!?]?$/i,
+    /^i\s+go\s+first[.!?]?$/i,
   ];
 
   const rejectedGrammarPatterns = [
@@ -3040,15 +3042,22 @@
     });
   }
 
+  function validateEverydayNaturalness(item, requireHumanReviewed = false) {
+    const english = String(item?.english || "").trim();
+    if (requireHumanReviewed && item.reviewedNatural !== true) return false;
+    if (rejectedUnnaturalSentencePatterns.some((pattern) => pattern.test(english))) return false;
+    return true;
+  }
+
   function validateSentenceGrammarAndNaturalness(item, allowedVocabulary = null, requireHumanReviewed = false) {
     const english = String(item?.english || "").trim();
     const tokens = dailyEnglishTokens(english);
+
+    // 先检查句子结构和已学词白名单，再判断母语者日常是否会自然地这样说。
     if (!validateDailySentenceQuality([item], allowedVocabulary)) return false;
-    if (requireHumanReviewed && item.reviewedNatural !== true) return false;
-    if (rejectedUnnaturalSentencePatterns.some((pattern) => pattern.test(english))) return false;
     if (rejectedGrammarPatterns.some((pattern) => pattern.test(english))) return false;
     if (tokens.some((token, index) => index > 0 && token === tokens[index - 1])) return false;
-    return true;
+    return validateEverydayNaturalness(item, requireHumanReviewed);
   }
 
   function validateDailySentenceSet(items, words, day = words[0]?.day || state.currentDay) {
