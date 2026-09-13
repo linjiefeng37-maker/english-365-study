@@ -4,6 +4,7 @@
   const STORAGE_KEY = "english365-progress-v1";
   const LEARNED_THROUGH_DAY = 11;
   const data = window.ENGLISH_365_DATA;
+  const importedSentenceDays = window.ENGLISH_365_SENTENCE_DATA?.days || {};
   const defaultState = {
     currentDay: LEARNED_THROUGH_DAY,
     studyDay: LEARNED_THROUGH_DAY,
@@ -1535,11 +1536,13 @@
     if (key === "all" && ["am", "are", "is"].includes(previous)) return "都";
     if (key === "well" && previous === "very") return "好地";
     if (key === "left") {
+      if (tokens.includes("or")) return "左边";
       if (["go", "turn"].includes(previous)) return "向左";
       if (previous === "the") return "左边";
       return "离开了";
     }
     if (key === "right") {
+      if (tokens.includes("or")) return "右边";
       if (tokens.includes("write")) return "正确地";
       if (tokens.includes("go") || previous === "turn") return "向右";
       return "正确的";
@@ -1638,6 +1641,22 @@
   }
 
   function sentenceOrderPresentation(item, scopeWords, focusWords) {
+    if (item.importedFromWorkbook && item.gloss) {
+      const focus = sentenceFocusSet(focusWords);
+      const englishHTML = highlightSentenceOrderPart(item.english, focus);
+      const chineseParts = String(item.gloss).split("｜").map((part) => part.trim()).filter(Boolean);
+      const chineseText = chineseParts.join("｜");
+      const chineseHTML = chineseParts.map((part, index) => {
+        const divider = index < chineseParts.length - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : "";
+        return `<span class="sentence-order-sheet-part">${escapeHTML(part)}${divider}</span>`;
+      }).join("");
+      const alignedHTML = `<span class="sentence-order-grid sentence-order-grid--workbook" aria-label="${escapeHTML(`${item.english}，对应中文：${chineseText}`)}"><b class="sentence-order-en sentence-order-sheet-en">${englishHTML}</b><span class="sentence-order-zh sentence-order-sheet-zh" lang="zh-CN">${chineseHTML}</span></span>`;
+      const speechChinese = chineseParts.join("")
+        .replace(/[，、；：｜]/g, "")
+        .replace(/\s+/g, "")
+        .trim();
+      return { englishHTML, chineseText, alignedHTML, speechChinese };
+    }
     const segments = sentenceOrderSegments(item, scopeWords);
     const speechSegments = sentenceSpeechSegments(item, segments);
     const focus = sentenceFocusSet(focusWords);
@@ -1672,13 +1691,40 @@
       offset: state.sentenceOffset,
       englishOnly: false,
     });
-    $("#sentenceSummary").textContent = `Day ${day} · 自然优先 · 每句 1～3 个重点词 · 只用已学词`;
+    $("#sentenceSummary").textContent = importedSentencesForDay(day).length
+      ? `Day ${day} · 桌面表格自然句 · ${items.length} 句`
+      : `Day ${day} · 自然优先 · 每句 1～3 个重点词 · 只用已学词`;
     $("#playAllSentences").disabled = items.length === 0;
     $("#refreshSentences").disabled = items.length < 2;
   }
 
   function dailyWords(day = state.currentDay) {
     return getWords(day).map((item, index) => ({ ...item, day, index }));
+  }
+
+  function vocabularyThroughDay(day) {
+    const words = [];
+    for (let learnedDay = 1; learnedDay <= day; learnedDay += 1) {
+      getWords(learnedDay).forEach((item, index) => words.push({ ...item, day: learnedDay, index }));
+    }
+    return words;
+  }
+
+  function importedSentencesForDay(day) {
+    if (state.customDays[day]) return [];
+    const items = importedSentenceDays[String(day)] || importedSentenceDays[day] || [];
+    return items.map((item) => ({
+      ...item,
+      day,
+      focus: Array.isArray(item.focus) ? item.focus : [],
+      breakdown: [],
+      reviewedNatural: true,
+      importedFromWorkbook: true,
+    }));
+  }
+
+  function hasReviewedSentenceSource(day) {
+    return importedSentencesForDay(day).length > 0 || Boolean(dailyCombinedSentenceLibrary[day]?.length);
   }
 
   function rotateDailyItems(items, offset = 0) {
@@ -3236,6 +3282,8 @@
   }
 
   function buildDailySentenceAttempt(day, words, seed = 0) {
+    const imported = importedSentencesForDay(day);
+    if (imported.length) return rotateDailyItems(imported, seed);
     const combined = state.customDays[day] ? [] : (dailyCombinedSentenceLibrary[day] || []);
     if (combined.length) {
       return rotateDailyItems(combined, seed).map((item) => {
@@ -3281,6 +3329,8 @@
   function dailySentencesForDay(day, offset = 0) {
     const words = dailyWords(day);
     if (words.length < 2) return [];
+    const imported = importedSentencesForDay(day);
+    if (imported.length) return rotateDailyItems(imported, offset);
     const requiresCombinedSentences = Boolean(!state.customDays[day] && dailyCombinedSentenceLibrary[day]?.length);
     for (let attempt = 0; attempt < 24; attempt += 1) {
       const items = buildDailySentenceAttempt(day, words, Number(offset || 0) + attempt);
@@ -3293,7 +3343,8 @@
     return [];
   }
   function dailyFocusWords(item, day) {
-    const available = new Map(dailyWords(day).map((word) => [word.english.toLowerCase(), word]));
+    const scopeWords = item.importedFromWorkbook ? vocabularyThroughDay(day) : dailyWords(day);
+    const available = new Map(scopeWords.map((word) => [word.english.toLowerCase(), word]));
     return item.focus.map((word) => available.get(word.toLowerCase())).filter(Boolean).slice(0, 5);
   }
 
@@ -3302,7 +3353,7 @@
   }
 
   function dailyFocusListHTML(item, day, englishOnly) {
-    const scopeWords = dailyWords(day);
+    const scopeWords = item.importedFromWorkbook ? vocabularyThroughDay(day) : dailyWords(day);
     return dailyFocusWords(item, day).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(sentenceWordMeaning(item, word, scopeWords))}</small>`}</span>`).join("");
   }
 
@@ -3398,7 +3449,8 @@
     }
   }
   function weeklyFocusWords(item, week) {
-    const available = new Map(wordsForWeek(week).map((word) => [word.english.toLowerCase(), word]));
+    const scopeWords = item.importedFromWorkbook ? vocabularyThroughDay(Number(item.day) || weekRange(week).end) : wordsForWeek(week);
+    const available = new Map(scopeWords.map((word) => [word.english.toLowerCase(), word]));
     return item.focus
       .map((word) => available.get(word.toLowerCase()))
       .filter(Boolean)
@@ -3415,7 +3467,7 @@
   }
 
   function weeklyFocusListHTML(item, week, englishOnly = false) {
-    const scopeWords = wordsForWeek(week);
+    const scopeWords = item.importedFromWorkbook ? vocabularyThroughDay(Number(item.day) || weekRange(week).end) : wordsForWeek(week);
     return weeklyFocusWords(item, week).map((word) => `<span><b>${escapeHTML(word.english)}</b>${englishOnly ? "" : `<small>${escapeHTML(sentenceWordMeaning(item, word, scopeWords))}</small>`}</span>`).join("");
   }
 
@@ -3477,16 +3529,19 @@
       const selectedDayWords = words.filter((word) => Number(word.day) === day);
       return !state.customDays[day]
         && selectedDayWords.length === getWords(day).length
-        && Boolean(dailyCombinedSentenceLibrary[day]?.length);
+        && hasReviewedSentenceSource(day);
     });
     if (canUseCombinedDailySets) {
       const daySets = selectedDays.map((day, dayIndex) => {
         const dayWords = dailyWords(day);
         const items = buildDailySentenceAttempt(day, dayWords, Number(offset || 0) + dayIndex);
+        const imported = items.some((item) => item.importedFromWorkbook);
         return {
           day,
-          items: (validateCombinedDailySentenceSet(items, dayWords, day) ? items : [])
-            .filter((item) => reviewSentenceIsNatural(item, allowedVocabulary)),
+          items: imported
+            ? items.filter((item) => item.english && item.gloss && item.focus.length)
+            : (validateCombinedDailySentenceSet(items, dayWords, day) ? items : [])
+              .filter((item) => reviewSentenceIsNatural(item, allowedVocabulary)),
         };
       }).filter((group) => group.items.length);
       return balancedWeeklySentences(daySets, offset);
@@ -3917,8 +3972,9 @@
       englishOnly: false,
       scopedWords,
     });
+    const usesWorkbookSentences = items.some((item) => item.importedFromWorkbook);
     $("#reviewSentenceSummary").textContent = selectedEnd
-      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${items.length} 句 · 只用已学词自然组句`
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${items.length} 句 · ${usesWorkbookSentences ? "桌面表格自然句" : "只用已学词自然组句"}`
       : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
     $("#shadowReviewSentences").disabled = items.length === 0;

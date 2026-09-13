@@ -324,6 +324,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .sentence-card .sentence-order-zh,
 .sentence-now-playing .sentence-order-zh { display: block; min-width: 0; max-width: 100%; margin: 2px 0 0; color: var(--muted); font-size: 1rem; font-weight: 700; line-height: 1.18; letter-spacing: 0; white-space: normal; overflow-wrap: anywhere; }
 .sentence-order-grid .sentence-order-divider { display: inline; margin: 0 .1em; color: #99a49b; font: inherit; }
+.sentence-order-grid--workbook { display: grid !important; grid-template-columns: minmax(0, 1fr); row-gap: 3px !important; width: 100%; overflow: visible !important; }
+.sentence-order-sheet-en { width: 100%; }
+.sentence-order-sheet-zh { display: flex !important; flex-wrap: wrap; align-items: baseline; width: 100%; }
+.sentence-order-sheet-part { display: inline; }
 .sentence-now-playing .sentence-order-en,
 .sentence-now-playing .sentence-order-zh { color: white; }
 .sentence-now-playing .sentence-order-divider { color: rgba(255,255,255,.58); }
