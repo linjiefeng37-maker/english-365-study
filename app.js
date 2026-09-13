@@ -3474,6 +3474,12 @@
   const REVIEW_SENTENCE_MIN = 8;
   const REVIEW_SENTENCE_MAX = 15;
 
+  const rejectedReviewSentencePatterns = [
+    /^where\s+is\s+home[?!.]?$/i,
+    /^come\s+near\s+me[?!.]?$/i,
+    /^i\s+pay\s+now[?!.]?$/i,
+  ];
+
   function weeklySentenceGoal(dayCount, candidateCount) {
     if (!candidateCount) return 0;
     const preferred = Math.min(REVIEW_SENTENCE_MAX, Math.max(REVIEW_SENTENCE_MIN, dayCount * 2 + 4));
@@ -3486,6 +3492,7 @@
       && tokenCount <= 7
       && item.focus.length >= 1
       && item.focus.length <= 5
+      && !rejectedReviewSentencePatterns.some((pattern) => pattern.test(item.english))
       && validateSentenceGrammarAndNaturalness(item, allowedVocabulary, true);
   }
 
@@ -3539,7 +3546,7 @@
         return {
           day,
           items: imported
-            ? items.filter((item) => item.english && item.gloss && item.focus.length)
+            ? items.filter((item) => reviewSentenceIsNatural(item, allowedVocabulary))
             : (validateCombinedDailySentenceSet(items, dayWords, day) ? items : [])
               .filter((item) => reviewSentenceIsNatural(item, allowedVocabulary)),
         };
@@ -3972,9 +3979,8 @@
       englishOnly: false,
       scopedWords,
     });
-    const usesWorkbookSentences = items.some((item) => item.importedFromWorkbook);
     $("#reviewSentenceSummary").textContent = selectedEnd
-      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${items.length} 句 · ${usesWorkbookSentences ? "桌面表格自然句" : "只用已学词自然组句"}`
+      ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd} · ${items.length} 句 · 自然优先 · 只用已学词`
       : `第 ${reviewWeek} 周尚未学到，暂不生成句子`;
     $("#playReviewSentences").disabled = items.length === 0;
     $("#shadowReviewSentences").disabled = items.length === 0;
