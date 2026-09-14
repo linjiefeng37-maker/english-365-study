@@ -42,6 +42,7 @@
   let reviewFilter = "all";
   let reviewWeek = Math.ceil((state.currentDay || 1) / 7);
   let reviewMode = "words";
+  let sentenceMode = "study";
   let listeningWeek = reviewWeek;
   let playbackToken = 0;
   let activePlayback = null;
@@ -52,6 +53,10 @@
   let speechVoices = [];
   let activeUtterances = [];
   let deferredInstallPrompt = null;
+  const sentencePracticeSessions = {
+    daily: { scope: "", index: 0, answers: [], feedback: null },
+    review: { scope: "", index: 0, answers: [], feedback: null },
+  };
 
   const sentenceTemplates = [
     sentence("I want to learn.", "我想学习。", ["want", "learn"], [["I", "我"], ["want", "想要"], ["to learn", "学习"]]),
@@ -338,7 +343,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=install-help-46", { updateViaCache: "none" })
+          .register("./sw.js?v=sentence-learning-53", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1684,12 +1689,14 @@
       const focus = sentenceFocusSet(focusWords);
       const englishHTML = highlightSentenceOrderPart(item.english, focus);
       const chineseParts = String(item.gloss).split("｜").map((part) => part.trim()).filter(Boolean);
-      const chineseText = chineseParts.join("｜");
-      const chineseHTML = chineseParts.map((part, index) => {
-        const divider = index < chineseParts.length - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : "";
-        return `<span class="sentence-order-sheet-part">${escapeHTML(part)}${divider}</span>`;
+      const segments = sentenceOrderSegments(item, scopeWords);
+      const chineseText = segments.map((part) => part.chinese).join("｜");
+      const alignmentLabel = segments.map((part) => `${part.english}对应${part.chinese}`).join("，");
+      const pairs = segments.map((part, index) => {
+        const divider = index < segments.length - 1 ? '<span class="sentence-order-divider" aria-hidden="true">｜</span>' : "";
+        return `<span class="sentence-order-pair"><b class="sentence-order-en">${highlightSentenceOrderPart(part.english, focus)}${divider}</b><span class="sentence-order-zh" lang="zh-CN">${escapeHTML(part.chinese)}${divider}</span></span>`;
       }).join("");
-      const alignedHTML = `<span class="sentence-order-grid sentence-order-grid--workbook" aria-label="${escapeHTML(`${item.english}，对应中文：${chineseText}`)}"><b class="sentence-order-en sentence-order-sheet-en">${englishHTML}</b><span class="sentence-order-zh sentence-order-sheet-zh" lang="zh-CN">${chineseHTML}</span></span>`;
+      const alignedHTML = `<span class="sentence-order-grid" aria-label="${escapeHTML(alignmentLabel)}">${pairs}</span>`;
       const speechChinese = chineseParts.join("")
         .replace(/[，、；：｜]/g, "")
         .replace(/\s+/g, "")
@@ -1699,9 +1706,7 @@
     const segments = sentenceOrderSegments(item, scopeWords);
     const speechSegments = sentenceSpeechSegments(item, segments);
     const focus = sentenceFocusSet(focusWords);
-    const englishHTML = segments
-      .map((part) => highlightSentenceOrderPart(part.english, focus))
-      .join('<span aria-hidden="true">｜</span>');
+    const englishHTML = highlightSentenceOrderPart(item.english, focus);
     const chineseText = segments.map((part) => part.chinese).join("｜");
     const alignmentLabel = segments.map((part) => `${part.english}对应${part.chinese}`).join("，");
     const pairs = segments.map((part, index) => {
@@ -1715,6 +1720,117 @@
       .replace(/\s+/g, "")
       .trim();
     return { englishHTML, chineseText, alignedHTML, speechChinese };
+  }
+
+  function sentenceNaturalChinese(item, order) {
+    const text = String(item.naturalChinese || item.chinese || order.speechChinese || "").trim();
+    if (!text) return "暂无自然中文。";
+    return /[。！？!?]$/.test(text) ? text : `${text}。`;
+  }
+
+  const sentenceStructureVerbs = new Set([
+    "am", "is", "are", "was", "were", "be", "been", "being", "can", "could", "will", "would", "may", "might", "should", "do", "does", "did",
+    "work", "start", "finish", "want", "buy", "sell", "play", "read", "give", "take", "come", "go", "write", "ask", "answer", "push", "pull", "hear",
+    "learn", "learning", "sit", "stand", "see", "teach", "make", "help", "use", "talk", "talking", "look", "call", "calling", "tell", "smell", "walk", "walking",
+    "know", "run", "eat", "drive", "hate", "ride", "riding", "say", "have", "swim", "swimming", "win", "lose", "laugh", "cry", "send", "cook", "cooking",
+    "love", "wash", "washing", "clean", "sleep", "stop", "care", "caring", "hope", "bring", "move", "moving", "rest", "shop", "shopping", "found", "pay", "paying",
+    "upload", "download", "rain", "wake", "hurt", "heal", "speak", "listen", "arrive", "leave", "enter", "open", "close",
+  ]);
+
+  const sentenceAuxiliaryVerbs = new Set(["am", "is", "are", "was", "were", "can", "could", "will", "would", "may", "might", "should", "do", "does", "did"]);
+  const sentenceModalVerbs = new Set(["can", "could", "will", "would", "may", "might", "should", "do", "does", "did"]);
+  const sentenceBeVerbs = new Set(["am", "is", "are", "was", "were"]);
+
+  function sentenceClauseStructure(words, lower, start, end, inheritedSubjectRange = null) {
+    const relativeVerbIndex = lower.slice(start, end).findIndex((word) => sentenceStructureVerbs.has(word));
+    if (relativeVerbIndex < 0) return {
+      subjectRange: inheritedSubjectRange,
+      predicateRange: null,
+      objectRange: [start, end],
+      imperative: false,
+    };
+    const verbIndex = start + relativeVerbIndex;
+    const imperative = verbIndex === start && !sentenceAuxiliaryVerbs.has(lower[verbIndex]) && !inheritedSubjectRange;
+    const subjectRange = verbIndex > start ? [start, verbIndex] : inheritedSubjectRange;
+    let predicateEnd = verbIndex + 1;
+    if (sentenceModalVerbs.has(lower[verbIndex]) && predicateEnd < end) predicateEnd += 1;
+    if (sentenceBeVerbs.has(lower[verbIndex]) && /ing$/.test(lower[predicateEnd] || "") && predicateEnd < end) predicateEnd += 1;
+    if (["want", "like", "hate"].includes(lower[verbIndex]) && lower[verbIndex + 1] === "to" && lower[verbIndex + 2] && verbIndex + 2 < end) predicateEnd = verbIndex + 3;
+    return {
+      subjectRange,
+      predicateRange: [verbIndex, Math.min(predicateEnd, end)],
+      objectRange: [Math.min(predicateEnd, end), end],
+      imperative,
+    };
+  }
+
+  function sentenceStructure(item) {
+    const words = practiceEnglishWords(item.english);
+    const lower = words.map((word) => word.toLowerCase());
+    const splitIndices = lower
+      .map((word, index) => (["and", "but", "or"].includes(word) ? index : -1))
+      .filter((index) => index > 0
+        && lower.slice(0, index).some((word) => sentenceStructureVerbs.has(word))
+        && lower.slice(index + 1).some((word) => sentenceStructureVerbs.has(word)));
+    const ranges = [];
+    let start = 0;
+    splitIndices.forEach((index) => {
+      if (index > start) ranges.push([start, index]);
+      start = index + 1;
+    });
+    if (start < words.length) ranges.push([start, words.length]);
+    if (!ranges.length) ranges.push([0, words.length]);
+    const clauses = [];
+    let inheritedSubjectRange = null;
+    ranges.forEach(([rangeStart, rangeEnd]) => {
+      const clause = sentenceClauseStructure(words, lower, rangeStart, rangeEnd, inheritedSubjectRange);
+      if (clause.subjectRange) inheritedSubjectRange = clause.subjectRange;
+      clauses.push(clause);
+    });
+    return { clauses };
+  }
+
+  function sentenceStructureChinese(item, structure, scopeWords) {
+    const segments = sentenceOrderSegments(item, scopeWords);
+    let cursor = 0;
+    const spans = segments.map((segment) => {
+      const length = Math.max(1, practiceEnglishWords(segment.english).length);
+      const span = { ...segment, start: cursor, end: cursor + length };
+      cursor += length;
+      return span;
+    });
+    const translateRange = (range, fallback = "—") => {
+      if (!range) return fallback;
+      const [start, end] = range;
+      const text = spans
+        .filter((span) => span.end > start && span.start < end)
+        .map((span) => span.chinese)
+        .join("")
+        .trim();
+      return text || fallback;
+    };
+    const unique = (values) => [...new Set(values.filter((value) => value && value !== "—"))];
+    const subjects = unique(structure.clauses.map((clause) => clause.imperative ? "（你）" : translateRange(clause.subjectRange)));
+    const predicates = unique(structure.clauses.map((clause) => translateRange(clause.predicateRange)));
+    const objects = unique(structure.clauses.map((clause) => translateRange(clause.objectRange)));
+    return {
+      subject: subjects.join("、") || "—",
+      predicate: predicates.join("、") || "—",
+      object: objects.join("、") || "—",
+    };
+  }
+
+  function sentenceLearningDetailsHTML(item, order, scopeWords) {
+    const structure = sentenceStructure(item);
+    const chineseStructure = sentenceStructureChinese(item, structure, scopeWords);
+    return `<h2 class="sentence-main-english">${order.englishHTML}</h2>
+      <p class="sentence-translation-row"><span>自然中文：</span><b lang="zh-CN">${escapeHTML(sentenceNaturalChinese(item, order))}</b></p>
+      <p class="sentence-translation-row sentence-order-row"><span>英语语序：</span><b lang="zh-CN">${escapeHTML(order.chineseText || "—")}</b></p>
+      <div class="sentence-structure" aria-label="句子主谓宾结构">
+        <span><small>主语：</small><b lang="zh-CN">${escapeHTML(chineseStructure.subject)}</b></span>
+        <span><small>谓语：</small><b lang="zh-CN">${escapeHTML(chineseStructure.predicate)}</b></span>
+        <span><small>宾语 / 补充：</small><b lang="zh-CN">${escapeHTML(chineseStructure.object)}</b></span>
+      </div>`;
   }
 
   function renderSentences() {
@@ -1733,8 +1849,18 @@
     $("#sentenceSummary").textContent = importedSentencesForDay(day).length
       ? `Day ${day} · 桌面表格自然句 · ${items.length} 句`
       : `Day ${day} · 自然优先 · 每句 1～3 个重点词 · 只用已学词`;
+    $$(".sentence-mode-btn").forEach((button) => {
+      const active = button.dataset.sentenceMode === sentenceMode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    $("#sentenceStudyPanel").hidden = sentenceMode !== "study";
+    $("#sentencePracticePanel").hidden = sentenceMode !== "practice";
+    $("#playAllSentences").hidden = sentenceMode === "practice";
+    $("#refreshSentences").hidden = sentenceMode === "practice";
     $("#playAllSentences").disabled = items.length === 0;
     $("#refreshSentences").disabled = items.length < 2;
+    if (sentenceMode === "practice") renderDailySentencePractice();
   }
 
   function dailyWords(day = state.currentDay) {
@@ -3403,7 +3529,7 @@
       : `<button class="daily-sentence-speak" data-index="${index}" aria-label="播放一次句子">🔊 <span>播放一次</span></button><button class="daily-sentence-loop" data-index="${index}" aria-label="循环播放句子">↻ <span>循环播放</span></button>`;
     return `<article class="sentence-card daily-sentence-card" data-sentence-index="${index}">
       <div class="sentence-top">
-        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${englishOnly ? order.englishHTML : order.alignedHTML}</h2></div>
+        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span>${englishOnly ? `<h2>${order.englishHTML}</h2>` : sentenceLearningDetailsHTML(item, order, dailyWords(day))}</div>
         <div class="sentence-controls">${controls}</div>
       </div>
       <div class="weekly-focus-list"><strong>${englishOnly ? "DAILY FOCUS WORDS" : "本日重点单词"}</strong><div>${dailyFocusListHTML(item, day, englishOnly)}</div></div>
@@ -3432,7 +3558,10 @@
     panel.hidden = false;
     labelElement.textContent = label;
     englishElement.innerHTML = englishOnly ? order.englishHTML : order.alignedHTML;
-    if (!englishOnly && chineseElement) chineseElement.hidden = true;
+    if (!englishOnly && chineseElement) {
+      chineseElement.hidden = false;
+      chineseElement.textContent = `自然中文：${sentenceNaturalChinese(item, order)}`;
+    }
     $$(".week-focus-word", panel).forEach((word) => word.classList.add("is-speaking"));
     $$(".sentence-card", list).forEach((candidate) => {
       const current = candidate === card;
@@ -3446,7 +3575,7 @@
     if (englishOnly) await speak(item.english, "en-US", token, listeningRate());
     else {
       const order = sentenceOrderPresentation(item, dailyWords(day), dailyFocusWords(item, day));
-      await speakQueuedPair(item.english, order.speechChinese, token, listeningRate());
+      await speakQueuedPair(item.english, sentenceNaturalChinese(item, order), token, listeningRate());
     }
   }
 
@@ -3635,7 +3764,7 @@
       : `<button class="weekly-sentence-speak" data-index="${index}" aria-label="播放一次句子">🔊 <span>播放一次</span></button><button class="weekly-sentence-loop" data-index="${index}" aria-label="循环播放句子">↻ <span>循环播放</span></button>`;
     return `<article class="sentence-card weekly-sentence-card" data-sentence-index="${index}">
       <div class="sentence-top">
-        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span><h2>${englishOnly ? weeklySentenceEnglishHTML(item, week) : order.alignedHTML}</h2></div>
+        <div><span class="sentence-number">${englishOnly ? `Sentence ${String(index + 1).padStart(2, "0")}` : `句子 ${String(index + 1).padStart(2, "0")}`}</span>${englishOnly ? `<h2>${weeklySentenceEnglishHTML(item, week)}</h2>` : sentenceLearningDetailsHTML(item, order, wordsForWeek(week))}</div>
         <div class="sentence-controls">${controls}</div>
       </div>
       <div class="weekly-focus-list"><strong>${englishOnly ? "WEEKLY FOCUS WORDS" : "本周重点单词"}</strong><div>${weeklyFocusListHTML(item, week, englishOnly)}</div></div>
@@ -3691,7 +3820,10 @@
     panel.hidden = false;
     labelElement.textContent = label;
     englishElement.innerHTML = englishOnly ? weeklySentenceEnglishHTML(item, week) : order.alignedHTML;
-    if (!englishOnly && chineseElement) chineseElement.hidden = true;
+    if (!englishOnly && chineseElement) {
+      chineseElement.hidden = false;
+      chineseElement.textContent = `自然中文：${sentenceNaturalChinese(item, order)}`;
+    }
     $$(".week-focus-word", panel).forEach((word) => word.classList.add("is-speaking"));
     $$(".sentence-card", list).forEach((candidate) => {
       const current = candidate === card;
@@ -3705,7 +3837,7 @@
     if (englishOnly) await speak(item.english, "en-US", token, listeningRate());
     else {
       const order = sentenceOrderPresentation(item, wordsForWeek(week), weeklyFocusWords(item, week));
-      await speakQueuedPair(item.english, order.speechChinese, token);
+      await speakQueuedPair(item.english, sentenceNaturalChinese(item, order), token);
     }
   }
 
@@ -3776,8 +3908,202 @@
       round += 1;
     }
   }
+
+  function practiceEnglishWords(text) {
+    return String(text || "").match(/[A-Za-z]+(?:[-'’][A-Za-z]+)*/g) || [];
+  }
+
+  function normalizedPracticeWords(text) {
+    return practiceEnglishWords(text).map((word) => word.toLowerCase().replaceAll("’", "'"));
+  }
+
+  function practiceChinesePrompt(item, kind) {
+    const scopeWords = kind === "daily" ? dailyWords(learnedThroughDay()) : wordsForWeek(reviewWeek);
+    const focusWords = kind === "daily" ? dailyFocusWords(item, learnedThroughDay()) : weeklyFocusWords(item, reviewWeek);
+    const generated = sentenceOrderPresentation(item, scopeWords, focusWords).speechChinese;
+    const source = item.naturalChinese || item.chinese || (item.gloss ? String(item.gloss).split("｜").join("") : generated);
+    const text = String(source || "").trim();
+    if (!text) return "请完成这句英语。";
+    return /[。！？!?]$/.test(text) ? text : `${text}。`;
+  }
+
+  function practiceOrderChinese(item, kind) {
+    const scopeWords = kind === "daily" ? dailyWords(learnedThroughDay()) : wordsForWeek(reviewWeek);
+    const focusWords = kind === "daily" ? dailyFocusWords(item, learnedThroughDay()) : weeklyFocusWords(item, reviewWeek);
+    return sentenceOrderPresentation(item, scopeWords, focusWords).chineseText || "—";
+  }
+
+  function practiceScene(item) {
+    const words = new Set(normalizedPracticeWords(item.english));
+    const matches = (items) => items.some((word) => words.has(word));
+    if (matches(["work", "worker", "working", "office", "desk", "job", "business"])) return { icon: "💼", label: "工作场景" };
+    if (matches(["home", "house", "room", "bedroom", "bathroom", "door", "floor"])) return { icon: "🏠", label: "居家场景" };
+    if (matches(["food", "eat", "drink", "water", "restaurant", "menu", "rice", "coffee", "tea"])) return { icon: "🍽️", label: "饮食场景" };
+    if (matches(["school", "learn", "learning", "read", "write", "book", "english", "lesson"])) return { icon: "📚", label: "学习场景" };
+    if (matches(["car", "bus", "train", "road", "street", "station", "airport", "taxi"])) return { icon: "🚌", label: "出行场景" };
+    if (matches(["buy", "sell", "shop", "store", "money", "pay", "price", "cash", "card"])) return { icon: "🛒", label: "购物场景" };
+    if (matches(["morning", "today", "tomorrow", "night", "day", "time", "year"])) return { icon: "🕒", label: "时间场景" };
+    if (matches(["happy", "tired", "hungry", "feel", "love", "like"])) return { icon: "😊", label: "日常表达" };
+    return { icon: "💬", label: "生活英语" };
+  }
+
+  function resetPracticeSession(session, keepIndex = true) {
+    if (!keepIndex) session.index = 0;
+    session.answers = [];
+    session.feedback = null;
+  }
+
+  function practiceTargetBlueprint(kind, item) {
+    const allWords = practiceEnglishWords(item.english);
+    const focusWords = kind === "daily"
+      ? dailyFocusWords(item, learnedThroughDay())
+      : weeklyFocusWords(item, reviewWeek);
+    const focus = new Set(focusWords.map((word) => String(word.english || word).toLowerCase()));
+    let targetIndices = allWords
+      .map((word, index) => focus.has(word.toLowerCase()) ? index : -1)
+      .filter((index) => index >= 0);
+    if (!targetIndices.length && allWords.length) targetIndices = [allWords.length - 1];
+    return {
+      allWords,
+      targetIndices,
+      expected: targetIndices.map((index) => allWords[index]),
+      punctuation: String(item.english || "").match(/[.!?]$/)?.[0] || "",
+    };
+  }
+
+  function practiceFeedback(session, kind) {
+    if (!session.feedback) {
+      const scopeName = kind === "daily" ? "今天学的" : "当前复习范围的";
+      return `<p class="practice-feedback" aria-live="polite">请把${scopeName}重点词直接输入句子空格。</p>`;
+    }
+    const answer = ["correct", "answer"].includes(session.feedback.type)
+      ? `<strong class="practice-correct-answer">正确句子：${escapeHTML(session.feedback.answer)}</strong>`
+      : "";
+    return `<p class="practice-feedback ${session.feedback.type}" aria-live="polite">${escapeHTML(session.feedback.text)}${answer}</p>`;
+  }
+
+  function renderSentenceInputPractice(kind, items, scopeLabel) {
+    const container = kind === "daily" ? $("#dailySentencePractice") : $("#reviewSentencePractice");
+    const session = sentencePracticeSessions[kind];
+    const scope = `${scopeLabel}:${items.map((item) => item.english).join("|")}`;
+    if (session.scope !== scope) {
+      session.scope = scope;
+      resetPracticeSession(session, false);
+    }
+    if (!items.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon" aria-hidden="true">⌨</div><h2>当前范围没有可练习的句子</h2><p>只会使用已经通过自然度检查的句子。</p></div>';
+      return;
+    }
+    session.index = Math.max(0, Math.min(session.index, items.length - 1));
+    const item = items[session.index];
+    const { allWords, targetIndices, expected, punctuation } = practiceTargetBlueprint(kind, item);
+    const targetPosition = new Map(targetIndices.map((wordIndex, blankIndex) => [wordIndex, blankIndex]));
+    const scene = practiceScene(item);
+    const answerHTML = allWords.map((word, wordIndex) => {
+      if (!targetPosition.has(wordIndex)) return `<span class="practice-given-word">${escapeHTML(word)}</span>`;
+      const blankIndex = targetPosition.get(wordIndex);
+      const value = session.answers[blankIndex] || "";
+      const width = Math.max(4, Math.min(12, word.length));
+      return `<input class="practice-inline-input" data-blank-index="${blankIndex}" type="text" value="${escapeHTML(value)}" style="--answer-length:${width}" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="第 ${blankIndex + 1} 个重点词空格" />`;
+    }).join("");
+    container.innerHTML = `<div class="practice-shell">
+      <article class="practice-card">
+        <div class="practice-head"><span>${escapeHTML(scopeLabel)}</span><span>第 ${session.index + 1} / ${items.length} 句</span></div>
+        <div class="practice-scene" role="img" aria-label="${escapeHTML(scene.label)}"><span class="practice-scene-icon" aria-hidden="true">${scene.icon}</span><small>${escapeHTML(scene.label)}</small></div>
+        <div class="practice-composer" aria-label="待完成的英语句子">
+          ${answerHTML}${punctuation ? `<span class="practice-punctuation">${escapeHTML(punctuation)}</span>` : ""}
+        </div>
+        <div class="practice-translation"><span>自然中文</span><strong lang="zh-CN">${escapeHTML(practiceChinesePrompt(item, kind))}</strong></div>
+        <p class="practice-order-chinese"><span>英语语序</span><b lang="zh-CN">${escapeHTML(practiceOrderChinese(item, kind))}</b></p>
+        ${practiceFeedback(session, kind)}
+        <div class="practice-actions">
+          <button type="button" class="secondary-btn" data-practice-action="delete">⌫ 删除一个</button>
+          <button type="button" class="secondary-btn" data-practice-action="reset">↺ 重来</button>
+          <button type="button" class="secondary-btn" data-practice-action="answer">👁 显示答案</button>
+          <button type="button" class="primary-btn" data-practice-action="submit">✓ 提交答案</button>
+        </div>
+        <div class="practice-nav">
+          <button type="button" class="secondary-btn" data-practice-action="previous" ${session.index === 0 ? "disabled" : ""}>← 上一句</button>
+          <button type="button" class="secondary-btn" data-practice-action="next" ${session.index === items.length - 1 ? "disabled" : ""}>下一句 →</button>
+        </div>
+      </article>
+    </div>`;
+
+    const rerender = () => renderSentenceInputPractice(kind, items, scopeLabel);
+    $$(".practice-inline-input", container).forEach((input) => {
+      input.addEventListener("input", () => {
+        session.answers[Number(input.dataset.blankIndex)] = input.value;
+        session.feedback = null;
+      });
+      input.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        checkSentencePracticeAnswer(kind, items, scopeLabel);
+      });
+    });
+    $$('[data-practice-action]', container).forEach((button) => button.addEventListener("click", () => {
+      const action = button.dataset.practiceAction;
+      if (action === "submit") return checkSentencePracticeAnswer(kind, items, scopeLabel);
+      if (action === "delete") {
+        const lastFilled = session.answers.map((answer) => String(answer || "").trim()).findLastIndex(Boolean);
+        if (lastFilled >= 0) session.answers[lastFilled] = "";
+        session.feedback = null;
+      } else if (action === "reset") {
+        resetPracticeSession(session, true);
+      } else if (action === "answer") {
+        const blueprint = practiceTargetBlueprint(kind, item);
+        session.answers = [...blueprint.expected];
+        session.feedback = { type: "answer", text: "这是正确答案。", answer: item.english };
+      } else if (action === "previous" || action === "next") {
+        session.index += action === "next" ? 1 : -1;
+        resetPracticeSession(session, true);
+      }
+      rerender();
+    }));
+  }
+
+  function checkSentencePracticeAnswer(kind, items, scopeLabel) {
+    const session = sentencePracticeSessions[kind];
+    const item = items[session.index];
+    if (!item) return;
+    const blueprint = practiceTargetBlueprint(kind, item);
+    const expected = blueprint.expected.map((word) => word.toLowerCase().replaceAll("’", "'"));
+    const entered = expected.map((_, index) => normalizedPracticeWords(session.answers[index] || "")[0] || "");
+    const correct = entered.length === expected.length && entered.every((word, index) => word === expected[index]);
+    if (correct) {
+      session.feedback = { type: "correct", text: "回答正确！", answer: item.english };
+      markActivity(kind === "daily" ? state.currentDay : weekRange(reviewWeek).start);
+    } else if (entered.some((word) => !word)) {
+      session.feedback = { type: "wrong", text: `还有 ${entered.filter((word) => !word).length} 个重点词没填，请再试一次。` };
+    } else {
+      const mismatch = entered.findIndex((word, index) => word !== expected[index]);
+      session.feedback = { type: "wrong", text: `第 ${mismatch + 1} 个空格不对，请再试一次。` };
+    }
+    renderSentenceInputPractice(kind, items, scopeLabel);
+  }
+
+  function renderDailySentencePractice() {
+    const day = learnedThroughDay();
+    renderSentenceInputPractice("daily", dailySentencesForDay(day, state.sentenceOffset), `Day ${day} 句子练习`);
+  }
+
+  function renderReviewSentencePractice() {
+    const range = weekRange(reviewWeek);
+    const selectedEnd = selectedReviewEndDay(reviewWeek);
+    const items = weeklySentencesForWeek(reviewWeek, state.reviewSentenceOffset, reviewRangeWords(reviewWeek));
+    const label = selectedEnd ? `第 ${reviewWeek} 周 · Day ${range.start}–${selectedEnd}` : `第 ${reviewWeek} 周`;
+    renderSentenceInputPractice("review", items, label);
+  }
+
+  function setSentenceMode(mode) {
+    if (!["study", "practice"].includes(mode)) return;
+    stopPlayback(false);
+    sentenceMode = mode;
+    renderSentences();
+  }
+
   function setReviewMode(mode) {
-    if (!["words", "sentences"].includes(mode)) return;
+    if (!["words", "sentences", "practice"].includes(mode)) return;
     stopPlayback(false);
     reviewMode = mode;
     $$(".review-mode-btn").forEach((button) => {
@@ -3787,6 +4113,7 @@
     });
     $("#reviewWordsPanel").hidden = mode !== "words";
     $("#reviewSentencesPanel").hidden = mode !== "sentences";
+    $("#reviewPracticePanel").hidden = mode !== "practice";
     renderReview();
   }
 
@@ -3798,6 +4125,7 @@
   }
 
   function bindSentences() {
+    $$(".sentence-mode-btn").forEach((button) => button.addEventListener("click", () => setSentenceMode(button.dataset.sentenceMode)));
     $("#sentenceRate").value = String(listeningRate());
     $("#sentenceRate").addEventListener("change", (event) => {
       stopPlayback(false);
@@ -3979,8 +4307,13 @@
     });
     $("#reviewWordsPanel").hidden = reviewMode !== "words";
     $("#reviewSentencesPanel").hidden = reviewMode !== "sentences";
+    $("#reviewPracticePanel").hidden = reviewMode !== "practice";
     if (reviewMode === "sentences") {
       renderReviewSentences();
+      return;
+    }
+    if (reviewMode === "practice") {
+      renderReviewSentencePractice();
       return;
     }
     const words = reviewWords();

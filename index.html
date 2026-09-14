@@ -13,7 +13,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=install-help-46" />
+    <link rel="stylesheet" href="styles.css?v=sentence-learning-53" />
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要内容</a>
@@ -174,30 +174,39 @@
             <button id="refreshSentences" class="secondary-btn">↻ 换一组句子</button>
           </div>
         </div>
-        <div class="review-week-row">
-          <div class="sentence-scope-label"><span>当前组句范围</span><strong id="sentenceDayLabel">Day 3 · 本日 15 个词</strong></div>
-          <label class="week-picker listening-speed-picker" for="sentenceRate">
-            <span>句子语速</span>
-            <select id="sentenceRate" aria-label="选择句子播放速度">
-              <option value="0.65">慢速</option>
-              <option value="0.78" selected>舒缓</option>
-              <option value="1">正常</option>
-            </select>
-          </label>
+        <div class="sentence-mode-tabs" role="tablist" aria-label="选择组句学习模式">
+          <button class="sentence-mode-btn active" data-sentence-mode="study" role="tab" aria-selected="true">✦ 句子学习</button>
+          <button class="sentence-mode-btn" data-sentence-mode="practice" role="tab" aria-selected="false">⌨ 句子输入练习</button>
         </div>
-        <p id="sentenceSummary" class="review-summary sentence-page-summary">英中逐段对应，中文保持英语语序。</p>
-        <section id="sentenceNowPlaying" class="sentence-now-playing" aria-live="polite" hidden>
-          <span class="pulse-dot" aria-hidden="true"></span>
-          <div>
-            <small id="sentenceNowLabel">正在循环播放</small>
-            <strong id="sentenceNowEnglish">准备播放句子</strong>
-            <span id="sentenceNowChinese">英语语序直译会显示在这里</span>
+        <section id="sentenceStudyPanel" role="tabpanel">
+          <div class="review-week-row">
+            <div class="sentence-scope-label"><span>当前组句范围</span><strong id="sentenceDayLabel">Day 3 · 本日 15 个词</strong></div>
+            <label class="week-picker listening-speed-picker" for="sentenceRate">
+              <span>句子语速</span>
+              <select id="sentenceRate" aria-label="选择句子播放速度">
+                <option value="0.65">慢速</option>
+                <option value="0.78" selected>舒缓</option>
+                <option value="1">正常</option>
+              </select>
+            </label>
+          </div>
+          <p id="sentenceSummary" class="review-summary sentence-page-summary">英中逐段对应，中文保持英语语序。</p>
+          <section id="sentenceNowPlaying" class="sentence-now-playing" aria-live="polite" hidden>
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <div>
+              <small id="sentenceNowLabel">正在循环播放</small>
+              <strong id="sentenceNowEnglish">准备播放句子</strong>
+              <span id="sentenceNowChinese">英语语序直译会显示在这里</span>
+            </div>
+          </section>
+          <div id="sentenceList" class="sentence-list"></div>
+          <div id="sentenceEmpty" class="empty-state" hidden>
+            <div class="empty-icon" aria-hidden="true">Aa</div><h2>这一天还没有足够的单词</h2><p>至少添加两个单词后，就能开始组句练习。</p>
           </div>
         </section>
-        <div id="sentenceList" class="sentence-list"></div>
-        <div id="sentenceEmpty" class="empty-state" hidden>
-          <div class="empty-icon" aria-hidden="true">Aa</div><h2>这一天还没有足够的单词</h2><p>至少添加两个单词后，就能开始组句练习。</p>
-        </div>
+        <section id="sentencePracticePanel" class="sentence-practice-panel" role="tabpanel" hidden>
+          <div id="dailySentencePractice"></div>
+        </section>
       </section>
 
       <section id="view-review" class="view" aria-labelledby="reviewHeading" hidden>
@@ -207,6 +216,7 @@
         <div class="review-mode-tabs" role="tablist" aria-label="选择复习模式">
           <button class="review-mode-btn active" data-review-mode="words" role="tab" aria-selected="true">Aa 单词复习</button>
           <button class="review-mode-btn" data-review-mode="sentences" role="tab" aria-selected="false">✦ 句子复习</button>
+          <button class="review-mode-btn" data-review-mode="practice" role="tab" aria-selected="false">⌨ 句子输入</button>
         </div>
         <div class="review-week-row">
           <label class="week-picker" for="reviewWeekSelect">
@@ -260,6 +270,10 @@
           </section>
           <div id="reviewSentenceList" class="sentence-list"></div>
           <div id="reviewSentenceEmpty" class="empty-state" hidden><div class="empty-icon" aria-hidden="true">Aa</div><h2>当前范围没有合适的自然句</h2><p>宁可暂时不显示，也不会用生硬或未学过的词硬凑句子。</p></div>
+        </section>
+
+        <section id="reviewPracticePanel" class="review-panel sentence-practice-panel" role="tabpanel" hidden>
+          <div id="reviewSentencePractice"></div>
         </section>
       </section>
 
@@ -336,8 +350,8 @@
     </dialog>
 
     <script src="data.js"></script>
-    <script src="vocabulary-days-4-50.js?v=install-help-46"></script>
-    <script src="sentences-days-13-50.js?v=install-help-46"></script>
-    <script src="app.js?v=install-help-46"></script>
+    <script src="vocabulary-days-4-50.js?v=sentence-learning-53"></script>
+    <script src="sentences-days-13-50.js?v=sentence-learning-53"></script>
+    <script src="app.js?v=sentence-learning-53"></script>
   </body>
 </html>
