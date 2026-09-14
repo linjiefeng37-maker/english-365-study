@@ -343,7 +343,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=sentence-learning-53", { updateViaCache: "none" })
+          .register("./sw.js?v=day15-50-sentences-55", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -592,15 +592,16 @@
   function learningGroupHTML(words, day) {
     const theme = String(words[0]?.theme || "生活场景").trim();
     const hasCoreWordGroup = Boolean(words[0]?.coreWord);
+    const hasRhymeGroup = words.slice(0, 5).every((item) => item.category === "同音词");
     const groups = [
       {
         number: "1",
-        title: hasCoreWordGroup ? "核心词学习" : "场景词",
+        title: hasCoreWordGroup ? "核心词学习" : hasRhymeGroup ? "同音词" : "场景词",
         count: "5 个",
-        description: hasCoreWordGroup ? "3 个同核心词＋2 个同场景词" : `同一个生活场景：${theme}`,
-        memoryTitle: hasCoreWordGroup ? `核心词：${words[0].coreWord}` : `场景：${theme}`,
-        memoryDescription: hasCoreWordGroup ? "先理解核心，再联系同场景词" : "这些词都在同一个场景中，帮助你整体记忆",
-        icon: "⌂",
+        description: hasCoreWordGroup ? "3 个同核心词＋2 个同场景词" : hasRhymeGroup ? "5 个同音或同韵词" : `同一个生活场景：${theme}`,
+        memoryTitle: hasCoreWordGroup ? `核心词：${words[0].coreWord}` : hasRhymeGroup ? `发音线索：${theme}` : `场景：${theme}`,
+        memoryDescription: hasCoreWordGroup ? "先理解核心，再联系同场景词" : hasRhymeGroup ? "放在一起读，按相同或相近的发音记忆" : "这些词都在同一个场景中，帮助你整体记忆",
+        icon: hasRhymeGroup ? "♪" : "⌂",
         words: words.slice(0, 5),
         explanation: hasCoreWordGroup ? coreWordExplanationHTML(words.slice(0, 5)) : ""
       },
@@ -721,6 +722,7 @@
 
   function wordCategoryLabel(item) {
     if (item.isGuide || item.category === "引导词") return "引导词";
+    if (item.category === "同音词") return "同音词";
     if (item.category === "同核心词") return "同核心词";
     if (item.category === "同词族/同韵") return "同词族";
     if (item.category === "成对词") return "成对关系词";
@@ -1847,7 +1849,7 @@
       englishOnly: false,
     });
     $("#sentenceSummary").textContent = importedSentencesForDay(day).length
-      ? `Day ${day} · 桌面表格自然句 · ${items.length} 句`
+      ? `Day ${day} · 已按本日词库更新 · ${items.length} 句`
       : `Day ${day} · 自然优先 · 每句 1～3 个重点词 · 只用已学词`;
     $$(".sentence-mode-btn").forEach((button) => {
       const active = button.dataset.sentenceMode === sentenceMode;
@@ -4263,6 +4265,7 @@
 
   function reviewWordGroup(item) {
     const category = wordCategoryLabel(item);
+    if (category === "同音词") return reviewWordGroupDefinitions[0];
     if (category === "场景词") return reviewWordGroupDefinitions[0];
     if (category === "成对关系词") return reviewWordGroupDefinitions[1];
     if (category === "引导词") return reviewWordGroupDefinitions[2];
@@ -4280,17 +4283,21 @@
     return reviewWordGroupDefinitions.map((group, groupIndex) => {
       const groupWords = grouped.get(group.key);
       if (!groupWords.length) return "";
+      const isRhymeOnlyGroup = group.key === "scene" && groupWords.every((item) => wordCategoryLabel(item) === "同音词");
+      const displayGroup = isRhymeOnlyGroup
+        ? { ...group, title: "同音词", description: "同音或同韵的一组词", icon: "♪" }
+        : group;
       const cards = groupWords.map((item) => wordCardHTML(item, item.day, item.index, true)).join("");
       const headingId = `reviewWordGroup-${group.key}`;
       return `<section class="word-group review-word-group word-group-${groupIndex + 1}" aria-labelledby="${headingId}">
         <div class="word-group-heading">
           <div class="word-group-summary">
             <span class="word-group-number" aria-hidden="true">${groupIndex + 1}</span>
-            <h2 id="${headingId}">${escapeHTML(group.title)}</h2>
+            <h2 id="${headingId}">${escapeHTML(displayGroup.title)}</h2>
             <span class="word-group-count">${groupWords.length} 个</span>
-            <p>${escapeHTML(group.description)}</p>
+            <p>${escapeHTML(displayGroup.description)}</p>
           </div>
-          <span class="review-word-group-icon" aria-hidden="true">${escapeHTML(group.icon)}</span>
+          <span class="review-word-group-icon" aria-hidden="true">${escapeHTML(displayGroup.icon)}</span>
         </div>
         <div class="word-group-grid">${cards}</div>
       </section>`;
