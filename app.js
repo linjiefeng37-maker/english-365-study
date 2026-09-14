@@ -252,23 +252,52 @@
     return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true);
   }
 
+  function isIOSDevice() {
+    const userAgent = window.navigator.userAgent || "";
+    return /iPhone|iPad|iPod/i.test(userAgent)
+      || (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
+  }
+
+  function openInstallHelpDialog(dialog) {
+    if (typeof dialog.showModal === "function") {
+      if (!dialog.open) dialog.showModal();
+      return;
+    }
+    dialog.setAttribute("open", "");
+    dialog.classList.add("install-dialog-fallback");
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    document.body.classList.add("install-dialog-lock");
+  }
+
+  function closeInstallHelpDialog() {
+    const dialog = $("#installHelp");
+    if (!dialog) return;
+    if (typeof dialog.close === "function" && dialog.open && !dialog.classList.contains("install-dialog-fallback")) {
+      dialog.close();
+      return;
+    }
+    dialog.removeAttribute("open");
+    dialog.classList.remove("install-dialog-fallback");
+    document.body.classList.remove("install-dialog-lock");
+  }
+
   function showInstallHelp() {
     const dialog = $("#installHelp");
     const title = $("#installHelpTitle");
     const steps = $("#installHelpSteps");
-    const isiPhone = /iPhone|iPad|iPod/i.test(window.navigator.userAgent || "");
     const isLocalFile = window.location.protocol === "file:";
     if (isLocalFile) {
       title.textContent = "请先打开正式线上网站";
       steps.innerHTML = "<li>在手机浏览器打开英语 365 的正式网址。</li><li>再点页面上方的“安装 App”。</li>";
-    } else if (isiPhone) {
-      title.textContent = "在 iPhone 上安装";
-      steps.innerHTML = "<li>使用 Safari 打开这个网站。</li><li>点击底部的“分享”按钮。</li><li>向下找到“添加到主屏幕”，再点“添加”。</li>";
+    } else if (isIOSDevice()) {
+      title.textContent = "添加到 iPhone 主屏幕";
+      steps.innerHTML = "<li>请使用 Safari 打开这个网站。</li><li>点击 Safari 底部的“分享”按钮（方框向上箭头）。</li><li>向下找到“添加到主屏幕”，再点右上角“添加”。</li>";
     } else {
       title.textContent = "安装到手机桌面";
       steps.innerHTML = "<li>打开浏览器菜单。</li><li>选择“安装应用”或“添加到主屏幕”。</li><li>确认安装，之后从桌面图标打开。</li>";
     }
-    dialog.showModal();
+    openInstallHelpDialog(dialog);
   }
 
   function setupAppInstall() {
@@ -296,10 +325,20 @@
       deferredInstallPrompt = null;
       if (choice?.outcome !== "accepted") showInstallHelp();
     });
+    $("#installHelp")?.addEventListener("click", (event) => {
+      if (!event.target.closest('[value="cancel"]')) return;
+      event.preventDefault();
+      closeInstallHelpDialog();
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && $("#installHelp")?.classList.contains("install-dialog-fallback")) {
+        closeInstallHelpDialog();
+      }
+    });
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=no-redundant-info-42", { updateViaCache: "none" })
+          .register("./sw.js?v=install-help-46", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
