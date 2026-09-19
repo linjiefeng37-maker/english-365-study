@@ -401,6 +401,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .practice-shell { width: min(760px, 100%); margin: 8px auto 0; }
 .practice-card { padding: clamp(18px, 4vw, 34px); border: 1px solid #cbd9c7; border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); }
 .practice-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; color: var(--muted); font-size: .88rem; font-weight: 850; }
+.practice-head-controls { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.practice-listen { display: inline-grid; place-items: center; width: 44px; height: 44px; border: 1px solid #c9dbc9; border-radius: 12px; color: var(--indigo-dark); background: var(--indigo-soft); font-size: 1.3rem; cursor: pointer; }
+.practice-listen:hover { background: #d4e4d3; }
+.practice-listen:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
 .practice-scene { min-height: 150px; display: grid; place-items: center; align-content: center; gap: 7px; margin-bottom: 20px; border-radius: 22px; background: linear-gradient(145deg, #e6f2e2, #f4eee0); color: var(--indigo-dark); }
 .practice-scene-icon { font-size: clamp(3.5rem, 12vw, 5.5rem); line-height: 1; filter: drop-shadow(0 8px 12px rgba(48,75,60,.12)); }
 .practice-scene small { font-weight: 850; letter-spacing: .06em; }

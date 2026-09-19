@@ -343,7 +343,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=day16-50-desktop-57", { updateViaCache: "none" })
+          .register("./sw.js?v=practice-listen-58", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1209,7 +1209,7 @@
     const allSentencesButton = $("#playAllSentences");
     if (allSentencesButton) {
       allSentencesButton.classList.remove("active");
-      allSentencesButton.textContent = "▶ 播放本日句子一遍";
+      allSentencesButton.textContent = "▶ 循环播放本日句子";
     }
     const reviewButton = $("#playReview");
     if (reviewButton) {
@@ -3659,17 +3659,16 @@
     const token = beginPlayback(`${context}-sentence-group`);
     const { list } = weeklySentenceElements(context);
     button.classList.add("active");
-    button.textContent = englishOnly ? "■ Stop" : "■ 停止播放";
+    button.textContent = englishOnly ? "■ Stop" : "■ 停止循环";
     markActivity(day);
-    for (const [index, item] of items.entries()) {
-      if (token !== playbackToken) break;
-      showDailySentencePlaying(item, $$(".sentence-card", list)[index], context, day, englishOnly, englishOnly ? "Now playing" : "正在播放本日句子");
-      await speakDailySentence(item, token, englishOnly, day);
-      if (token === playbackToken && index < items.length - 1) await wait(650 / speechRate(), token);
-    }
-    if (token === playbackToken) {
-      stopPlayback(false);
-      showToast(englishOnly ? "Finished" : "本日句子已播放一遍");
+    while (token === playbackToken) {
+      for (const [index, item] of items.entries()) {
+        if (token !== playbackToken) break;
+        showDailySentencePlaying(item, $$(".sentence-card", list)[index], context, day, englishOnly, englishOnly ? "Now playing" : "正在循环播放本日句子");
+        await speakDailySentence(item, token, englishOnly, day);
+        if (token === playbackToken && index < items.length - 1) await wait(650 / speechRate(), token);
+      }
+      if (token === playbackToken) await wait(950 / speechRate(), token);
     }
   }
   function weeklyFocusWords(item, week) {
@@ -4038,6 +4037,13 @@
     return `<p class="practice-feedback ${session.feedback.type}" aria-live="polite">${escapeHTML(session.feedback.text)}${answer}</p>`;
   }
 
+  async function playSentencePracticeAudio(item) {
+    if (!speechSupported()) return showToast("当前浏览器不支持语音播放");
+    const token = beginPlayback("sentence-practice");
+    await speak(item.english, "en-US", token, listeningRate());
+    if (token === playbackToken) stopPlayback(false);
+  }
+
   function renderSentenceInputPractice(kind, items, scopeLabel) {
     const container = kind === "daily" ? $("#dailySentencePractice") : $("#reviewSentencePractice");
     const session = sentencePracticeSessions[kind];
@@ -4064,7 +4070,7 @@
     }).join("");
     container.innerHTML = `<div class="practice-shell">
       <article class="practice-card">
-        <div class="practice-head"><span>${escapeHTML(scopeLabel)}</span><span>第 ${session.index + 1} / ${items.length} 句</span></div>
+        <div class="practice-head"><span>${escapeHTML(scopeLabel)}</span><div class="practice-head-controls"><span>第 ${session.index + 1} / ${items.length} 句</span><button type="button" class="practice-listen" data-practice-action="listen" aria-label="朗读当前完整英文句子" title="听这句英语">🔊</button></div></div>
         <div class="practice-scene" role="img" aria-label="${escapeHTML(scene.label)}"><span class="practice-scene-icon" aria-hidden="true">${scene.icon}</span><small>${escapeHTML(scene.label)}</small></div>
         <div class="practice-composer" aria-label="待完成的英语句子">
           ${answerHTML}${punctuation ? `<span class="practice-punctuation">${escapeHTML(punctuation)}</span>` : ""}
@@ -4099,6 +4105,7 @@
     });
     $$('[data-practice-action]', container).forEach((button) => button.addEventListener("click", () => {
       const action = button.dataset.practiceAction;
+      if (action === "listen") return playSentencePracticeAudio(item);
       if (action === "submit") return checkSentencePracticeAnswer(kind, items, scopeLabel);
       if (action === "delete") {
         const lastFilled = session.answers.map((answer) => String(answer || "").trim()).findLastIndex(Boolean);
