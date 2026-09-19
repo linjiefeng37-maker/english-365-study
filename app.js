@@ -343,7 +343,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=day16-50-desktop-56", { updateViaCache: "none" })
+          .register("./sw.js?v=day16-50-desktop-57", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -1593,7 +1593,7 @@
   ]);
 
   const sentenceStateAdjectives = new Set([
-    "bad", "cold", "cool", "fair", "far", "free", "full", "good", "happy", "hot", "hungry", "near",
+    "bad", "cold", "cool", "fair", "far", "fine", "free", "full", "good", "happy", "hot", "hungry", "late", "near",
     "new", "old", "ready", "right", "same", "slow", "soft", "strong", "thin", "tight", "tired", "warm",
   ]);
 
@@ -1603,6 +1603,9 @@
     const next = String(tokens[index + 1] || "").toLowerCase();
     const following = String(tokens[index + 2] || "").toLowerCase();
     if (key === "may") return sentencePermissionActions.has(next) ? "可以" : "可能";
+    if (key === "it" && tokens.join(" ") === "it is late") return "现在";
+    if (key === "fine" && previous === "feel") return "好";
+    if (key === "early" && tokens.includes("come") && tokens.includes("home")) return "早点";
     if (key === "can") {
       return ["you", "we"].includes(previous) && sentencePermissionActions.has(next) ? "可以" : "能";
     }
@@ -1773,6 +1776,8 @@
     "know", "run", "eat", "drive", "hate", "ride", "riding", "say", "have", "swim", "swimming", "win", "lose", "laugh", "cry", "send", "cook", "cooking",
     "love", "wash", "washing", "clean", "sleep", "stop", "care", "caring", "hope", "bring", "move", "moving", "rest", "shop", "shopping", "found", "pay", "paying",
     "upload", "download", "rain", "wake", "hurt", "heal", "speak", "listen", "arrive", "leave", "enter", "open", "close",
+    "need", "feel", "shine", "find", "spend", "lend", "pick", "kick", "keep", "pass", "fail", "remember", "receive",
+    "sing", "borrow", "mark", "lock", "thank", "drank", "skip", "hold", "told", "sold", "drop", "get", "let", "set",
   ]);
 
   const sentenceAuxiliaryVerbs = new Set(["am", "is", "are", "was", "were", "can", "could", "will", "would", "may", "might", "should", "do", "does", "did"]);
@@ -1793,6 +1798,7 @@
     let predicateEnd = verbIndex + 1;
     if (sentenceModalVerbs.has(lower[verbIndex]) && predicateEnd < end) predicateEnd += 1;
     if (sentenceBeVerbs.has(lower[verbIndex]) && /ing$/.test(lower[predicateEnd] || "") && predicateEnd < end) predicateEnd += 1;
+    if (["come", "go"].includes(lower[verbIndex]) && lower[predicateEnd] === "home") predicateEnd += 1;
     if (["want", "like", "hate"].includes(lower[verbIndex]) && lower[verbIndex + 1] === "to" && lower[verbIndex + 2] && verbIndex + 2 < end) predicateEnd = verbIndex + 3;
     return {
       subjectRange,
