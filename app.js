@@ -343,7 +343,7 @@
     if ("serviceWorker" in window.navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         window.navigator.serviceWorker
-          .register("./sw.js?v=day15-50-sentences-55", { updateViaCache: "none" })
+          .register("./sw.js?v=day16-50-desktop-56", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -570,6 +570,7 @@
     currentWordIndex = Math.min(currentWordIndex, words.length - 1);
     const hasLearningGroups = words.length === 15 && words.every((item) => item.category);
     list.classList.toggle("word-grid--grouped", hasLearningGroups);
+    list.classList.toggle("word-grid--guide-first", hasLearningGroups && words[0]?.learningGroup === "sound");
     list.innerHTML = hasLearningGroups
       ? learningGroupHTML(words, state.currentDay)
       : words.map((item, index) => wordCardHTML(item, state.currentDay, index)).join("");
@@ -593,7 +594,39 @@
     const theme = String(words[0]?.theme || "生活场景").trim();
     const hasCoreWordGroup = Boolean(words[0]?.coreWord);
     const hasRhymeGroup = words.slice(0, 5).every((item) => item.category === "同音词");
-    const groups = [
+    const hasGuideFirst = words[0]?.learningGroup === "sound";
+    const groups = hasGuideFirst ? [
+      {
+        number: "1",
+        title: "引导词＋同拼读词",
+        count: "6 个",
+        description: "1 个引导词＋5 个同拼读或同韵词",
+        memoryTitle: `引导词：${words[0].english}`,
+        memoryDescription: `共同拼写：${theme}；放在一起听读，记住相同的拼读规律`,
+        icon: "♪",
+        words: words.slice(0, 6)
+      },
+      {
+        number: "2",
+        title: "成对关系词",
+        count: "4 个",
+        description: "两对相互对应的词",
+        memoryTitle: "成对记忆",
+        memoryDescription: "对比学习，意思更清楚",
+        icon: "↔",
+        words: words.slice(6, 10)
+      },
+      {
+        number: "3",
+        title: "同族同拼写词",
+        count: "5 个",
+        description: "同词族优先，其他词按共同拼写联系",
+        memoryTitle: "词族与拼写记忆",
+        memoryDescription: "同词族表示词义相关；同拼写只表示词形相近",
+        icon: "▤",
+        words: words.slice(10, 15)
+      }
+    ] : [
       {
         number: "1",
         title: hasCoreWordGroup ? "核心词学习" : hasRhymeGroup ? "同音词" : "场景词",
@@ -723,8 +756,11 @@
   function wordCategoryLabel(item) {
     if (item.isGuide || item.category === "引导词") return "引导词";
     if (item.category === "同音词") return "同音词";
+    if (item.category === "同拼读词") return "同拼读词";
     if (item.category === "同核心词") return "同核心词";
     if (item.category === "同词族/同韵") return "同词族";
+    if (item.category === "同词族") return "同词族";
+    if (item.category === "同拼写词") return "同拼写词";
     if (item.category === "成对词") return "成对关系词";
     if (item.category === "场景词") return "场景词";
     return "";
@@ -1880,7 +1916,7 @@
   function importedSentencesForDay(day) {
     if (state.customDays[day]) return [];
     const items = importedSentenceDays[String(day)] || importedSentenceDays[day] || [];
-    return items.map((item) => ({
+    const imported = items.map((item) => ({
       ...item,
       day,
       focus: Array.isArray(item.focus) ? item.focus : [],
@@ -1888,6 +1924,18 @@
       reviewedNatural: true,
       importedFromWorkbook: true,
     }));
+    if (day < 16 || day > 50) return imported;
+    const allowedVocabulary = allowedVocabularyForDay(day);
+    const todayWords = new Set(getWords(day).map((word) => word.english.toLowerCase()));
+    return imported.filter((item) => {
+      const tokens = dailyEnglishTokens(item.english);
+      return tokens.length >= 3
+        && tokens.length <= 7
+        && item.focus.length >= 1
+        && item.focus.length <= 3
+        && item.focus.every((word) => todayWords.has(String(word).toLowerCase()) && tokens.includes(String(word).toLowerCase()))
+        && validateSentenceGrammarAndNaturalness(item, allowedVocabulary, true);
+    });
   }
 
   function hasReviewedSentenceSource(day) {
@@ -4264,6 +4312,9 @@
   ]);
 
   function reviewWordGroup(item) {
+    if (item.learningGroup === "sound") return reviewWordGroupDefinitions[0];
+    if (item.learningGroup === "pair") return reviewWordGroupDefinitions[1];
+    if (item.learningGroup === "family") return reviewWordGroupDefinitions[3];
     const category = wordCategoryLabel(item);
     if (category === "同音词") return reviewWordGroupDefinitions[0];
     if (category === "场景词") return reviewWordGroupDefinitions[0];
@@ -4283,9 +4334,14 @@
     return reviewWordGroupDefinitions.map((group, groupIndex) => {
       const groupWords = grouped.get(group.key);
       if (!groupWords.length) return "";
+      const hasGuideFirstGroup = group.key === "scene" && groupWords.some((item) => item.learningGroup === "sound");
       const isRhymeOnlyGroup = group.key === "scene" && groupWords.every((item) => wordCategoryLabel(item) === "同音词");
-      const displayGroup = isRhymeOnlyGroup
+      const displayGroup = hasGuideFirstGroup
+        ? { ...group, title: "引导词＋同拼读词", description: "引导词带出同拼读或同韵的词", icon: "♪" }
+        : isRhymeOnlyGroup
         ? { ...group, title: "同音词", description: "同音或同韵的一组词", icon: "♪" }
+        : group.key === "family" && groupWords.some((item) => item.learningGroup === "family")
+        ? { ...group, title: "同族同拼写词", description: "同词族或共同拼写的一组词", icon: "▤" }
         : group;
       const cards = groupWords.map((item) => wordCardHTML(item, item.day, item.index, true)).join("");
       const headingId = `reviewWordGroup-${group.key}`;
@@ -4334,6 +4390,7 @@
       : `第 ${reviewWeek} 周尚未学到，不显示后面的单词`;
     list.hidden = words.length === 0;
     list.classList.toggle("word-grid--grouped", words.length > 0);
+    list.classList.toggle("word-grid--guide-first", words.some((item) => item.learningGroup === "sound"));
     $("#reviewEmpty").hidden = words.length !== 0;
     $("#playReview").disabled = words.length === 0;
     list.innerHTML = reviewWordGroupsHTML(words);
