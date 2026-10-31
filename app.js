@@ -3502,8 +3502,36 @@
     }) || null;
   }
 
-  function buildDailySentenceAttempt(day, words, seed = 0) {
-    if (state.customDays[day]) { const uniqueWords = [...new Map(words.filter((word) => String(word.english || "").trim()).map((word) => [String(word.english).trim().toLowerCase(), word])).values()]; return rotateDailyItems(uniqueWords, seed).map((word) => { const english = String(word.english || "").trim(); const meaning = shortMeaning(word.chinese) || word.chinese; return sentence(`The word “${english}” is useful.`, `“${meaning}”这个词很有用。`, [english], [[`The word “${english}”`, `“${meaning}”这个词`], ["is useful", "很有用"]]); }); } const imported = importedSentencesForDay(day);
+  function buildDailySentenceAttempt(day, words, seed = 0) {    if (state.customDays[day]) {
+      const uniqueWords = [...new Map(words
+        .filter((word) => String(word.english || "").trim())
+        .map((word) => [String(word.english).trim().toLowerCase(), word])).values()];
+      const customSentenceExamples = {
+        long: ["We had a long day.", "我们度过了漫长的一天。"],
+        song: ["I like this song.", "我喜欢这首歌。"],
+        wrong: ["That answer is wrong.", "那个答案错了。"],
+        strong: ["He is very strong.", "他很强壮。"],
+        along: ["Come along with us.", "跟我们一起来。"],
+        belong: ["You belong here.", "你属于这里。"],
+        same: ["We have the same name.", "我们有相同的名字。"],
+        different: ["The two words are different.", "这两个词不同。"],
+        rich: ["She is rich.", "她很富有。"],
+        poor: ["He is poor.", "他很贫穷。"],
+        homepage: ["The homepage is clear.", "主页很清晰。"],
+        homewrok: ["I finished my homewrok.", "我完成了家庭作业。"],
+        hometown: ["My hometown is beautiful.", "我的家乡很美。"],
+        homdeless: ["The homdeless man needs help.", "这个无家可归的人需要帮助。"],
+      };
+      return rotateDailyItems(uniqueWords, seed).map((word, index) => {
+        const english = String(word.english || "").trim();
+        const example = customSentenceExamples[english.toLowerCase()];
+        if (example) return sentence(example[0], example[1], [english], []);
+        const candidates = dailyFallbackCandidates(word, seed + index);
+        return candidates.find((candidate) => validateSentenceGrammarAndNaturalness(candidate))
+          || sentence("I know about the " + english + ".", "我了解这个" + (shortMeaning(word.chinese) || word.chinese) + "。", [english], []);
+      });
+    }
+    const imported = importedSentencesForDay(day);
     if (imported.length) return rotateDailyItems(imported, seed);
     const combined = state.customDays[day] ? [] : (dailyCombinedSentenceLibrary[day] || []);
     if (combined.length) {
