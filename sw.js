@@ -1,4 +1,4 @@
-const CACHE_NAME = "english365-pwa-v45";
+const CACHE_NAME = "english365-pwa-v46";
 const APP_SHELL = [
   "./",
   "./index.html",
