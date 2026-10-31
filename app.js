@@ -3414,8 +3414,8 @@
   }
 
   function validateDailySentenceSet(items, words, day = words[0]?.day || state.currentDay) {
-    const expected = words.map((word) => String(word.english || "").trim().toLowerCase()).filter(Boolean);
-    const allowedVocabulary = allowedVocabularyForDay(day);
+    const expected = [...new Set(words.map((word) => String(word.english || "").trim().toLowerCase()).filter(Boolean))];
+    const allowedVocabulary = state.customDays[day] ? null : allowedVocabularyForDay(day);
     if (!items.length
       || new Set(expected).size !== expected.length
       || !items.every((item) => validateSentenceGrammarAndNaturalness(item, allowedVocabulary))) return false;
@@ -3503,7 +3503,7 @@
   }
 
   function buildDailySentenceAttempt(day, words, seed = 0) {
-    const imported = importedSentencesForDay(day);
+    if (state.customDays[day]) { const uniqueWords = [...new Map(words.filter((word) => String(word.english || "").trim()).map((word) => [String(word.english).trim().toLowerCase(), word])).values()]; return rotateDailyItems(uniqueWords, seed).map((word) => { const english = String(word.english || "").trim(); const meaning = shortMeaning(word.chinese) || word.chinese; return sentence(`The word “${english}” is useful.`, `“${meaning}”这个词很有用。`, [english], [[`The word “${english}”`, `“${meaning}”这个词`], ["is useful", "很有用"]]); }); } const imported = importedSentencesForDay(day);
     if (imported.length) return rotateDailyItems(imported, seed);
     const combined = state.customDays[day] ? [] : (dailyCombinedSentenceLibrary[day] || []);
     if (combined.length) {
