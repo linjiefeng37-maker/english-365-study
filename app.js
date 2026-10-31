@@ -3578,6 +3578,7 @@
   function dailySentencesForDay(day, offset = 0) {
     const words = dailyWords(day);
     if (words.length < 2) return [];
+        if (state.customDays[day]) return buildDailySentenceAttempt(day, words, offset);
     const imported = importedSentencesForDay(day);
     if (imported.length) return rotateDailyItems(imported, offset);
     const requiresCombinedSentences = Boolean(!state.customDays[day] && dailyCombinedSentenceLibrary[day]?.length);
