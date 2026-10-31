@@ -3518,7 +3518,7 @@
         rich: ["She is rich.", "她很富有。"],
         poor: ["He is poor.", "他很贫穷。"],
         homepage: ["The homepage is clear.", "主页很清晰。"],
-        homewrok: ["I finished my homewrok.", "我完成了家庭作业。"],
+                homewrok: ["I finished my homewrok.", "我完成了家庭作业。"], homework: ["I finished my homework.", "我完成了家庭作业。"],
         hometown: ["My hometown is beautiful.", "我的家乡很美。"],
         homdeless: ["The homdeless man needs help.", "这个无家可归的人需要帮助。"],
       };
